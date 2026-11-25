@@ -1,0 +1,26 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SHE New Armada - Login</title><link rel="stylesheet" href="css/style.css"></head>
+<body class="login">
+<aside class="lg-side">
+ <div class="lg-brand"><span class="lg"><span data-ico="shield-check"></span></span><div><b>SHE</b><small>New Armada</small></div></div>
+ <div class="lg-hero"><h2>Safety, Health &amp; <em>Environment</em> dalam satu sistem</h2><p>Pantau patroli 5R &amp; K3, inspeksi APAR, dan tindak lanjut temuan secara terstruktur di seluruh area produksi karoseri.</p>
+  <div class="lg-feat"><div><span class="ib2" data-ico="broom" data-size="19"></span>Patrol 5R &amp; K3 dengan dashboard per departemen</div><div><span class="ib2" data-ico="extinguisher" data-size="19"></span>APAR / FireCheck dan jadwal inspeksi</div><div><span class="ib2" data-ico="clipboard-check" data-size="19"></span>Temuan berfoto dan follow-up sampai selesai</div></div></div>
+ <div class="lg-foot">&copy; 2026 Safety, Health &amp; Environment &mdash; PT New Armada</div>
+</aside>
+<main class="lg-main"><div class="lg-form"><h2>Selamat datang</h2><div class="sub">Masuk dengan NIK dan password Anda</div>
+<label>NIK</label><input id="nik" placeholder="mis. 100001" autofocus autocomplete="username">
+<label>Password</label><div class="pwf"><input id="pw" type="password" placeholder="Masukkan password" autocomplete="current-password"><button type="button" id="tg" title="Tampilkan / sembunyikan password" onclick="tgp()"></button></div>
+<div class="err" id="err"></div><button class="btn" onclick="go()">Masuk</button>
+<div class="demo"><small>Akun demo (klik untuk mengisi)</small>
+<button type="button" onclick="fill('100001','admin123')"><span data-ico="user-check"></span><span><b>Admin SHE</b></span><small>100001 / admin123</small></button>
+<button type="button" onclick="fill('200001','user123')"><span data-ico="user"></span><span><b>Karyawan SHE</b></span><small>200001 / user123</small></button></div>
+</div></main>
+<script src="js/data.js"></script><script src="js/icons.js"></script><script src="js/store.js"></script>
+<script>if(me())location.href='launcher.html';
+tg.innerHTML=ico('eye',18);
+function tgp(){const h=pw.type==='password';pw.type=h?'text':'password';tg.innerHTML=ico(h?'eye-off':'eye',18)}
+function fill(n,p){nik.value=n;pw.value=p;err.textContent=''}
+function go(){const u=load().users.find(x=>x.nik===nik.value.trim()&&x.pass===pw.value);
+if(!u){err.textContent='NIK atau password salah';return}
+
+sessionStorage.setItem(SES,JSON.stringify({nik:u.nik,nama:u.nama,role:u.role}));location.href='launcher.html'}
+document.addEventListener('keydown',e=>e.key==='Enter'&&go())</script></body></html>

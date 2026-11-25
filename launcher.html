@@ -1,0 +1,15 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SHE - Apps</title><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/layout.css"></head>
+<body><div class="wrap" style="max-width:1180px!important">
+<section class="hero"><div><h2 id="hi">Apps</h2><p>Pilih aplikasi atau modul inspeksi Safety, Health &amp; Environment untuk memulai.</p></div><div id="adm" class="acts"></div></section>
+<div class="sech">Aplikasi utama</div><div class="apps" id="apps"></div>
+<div class="sech" id="modh">Modul inspeksi tambahan</div><div class="apps" id="mods"></div></div>
+<script src="js/data.js"></script><script src="js/icons.js"></script><script src="js/store.js"></script>
+<script>guard();topbar('Daftar Apps',false);const db=load();hi.textContent='Halo, '+me().nama;
+if(isAdmin())adm.innerHTML=`<button class="btn g s" onclick="document.body.classList.toggle('manage')">${ico('settings-2')} Kelola / Hapus</button> <button class="btn g s" onclick="if(confirm('Reset semua data demo?'))resetDemo()">${ico('refresh')} Reset demo</button>`;
+const tile=(on,icon,col,n,sub,x='',cls='')=>`<div class="app ${cls}" onclick="${on}">${x}<div class="ic" style="background:${col}1f;color:${col}">${ico(icon)}</div><div class="nm"><span>${n}</span><small>${sub}</small></div><span class="go">${ico('chevron-right',18)}</span></div>`;
+let h=tile("location.href='pages/apar.html'",'extinguisher','#d9686f','APAR / FireCheck','Inspeksi &amp; pemeliharaan APAR')+tile("location.href='pages/patrol5r.html'",'broom','#3f76cc','Patrol 5R &amp; K3','Patroli 5R dan keselamatan kerja');
+if(isAdmin())h+=tile("location.href='pages/users.html'",'users','#64748b','Manajemen User','Akun &amp; hak akses');apps.innerHTML=h;
+let m='';db.forms.forEach(f=>m+=tile(`location.href='pages/module.html?id=${f.id}'`,f.icon,f.color,esc(f.name),f.scale==='ng'?'Modul · Good / Not Good':'Modul · Skala 1–5',`<span class="x" title="Hapus modul" onclick="event.stopPropagation();del('${f.id}')">${ico('x')}</span>`));
+if(isAdmin())m+=tile("location.href='pages/form-builder.html'",'plus','#3f76cc','Modul Baru','Buat modul inspeksi sendiri','','add');
+if(!m)modh.style.display='none';else mods.innerHTML=m;
+function del(id){const f=db.forms.find(x=>x.id===id);if(!confirm(`Hapus modul "${f.name}" beserta dashboard & semua datanya?`))return;db.forms=db.forms.filter(x=>x.id!==id);db.inspections=db.inspections.filter(x=>x.formId!==id);save(db);location.reload()}</script></body></html>

@@ -1,0 +1,75 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Modul SHE</title><link rel="stylesheet" href="../css/style.css"><link rel="stylesheet" href="../css/layout.css"></head>
+<body><div class="wrap"><div class="tabs" id="tabs"></div><div id="v"></div></div>
+<script src="../js/data.js"></script>
+  <script src="../js/icons.js"></script><script src="../js/store.js"></script><script src="../js/ui.js"></script>
+<script>
+guard();let db=load();const qs=new URLSearchParams(location.search),F=db.forms.find(f=>f.id===qs.get('id'));
+if(!F)location.href='../launcher.html';topbar(ico(F.icon)+' '+esc(F.name),true);
+let tab='dash',month='',dept=DEPTS[0],fl={from:'',to:'',dept:'',bag:''},Q=flat(F.tree);
+const T={dash:'Dashboard',new:'Inspeksi Baru',hist:'Riwayat',find:'Temuan',form:'Kelola Form'},ng=F.scale==='ng',K=ng?100:1;
+const L0=()=>db.inspections.filter(x=>x.formId===F.id),months=()=>[...new Set(L0().map(x=>x.date.slice(0,7)))].sort();
+const POIN=()=>[...new Set(Q.map(i=>i.path[0]||'Umum'))],clone=o=>JSON.parse(JSON.stringify(o));
+const cc=v=>'c'+Math.max(1,Math.min(5,Math.round(v))),cell=z=>z==null?'-':ng?Math.round(z)+'%':z.toFixed(1);
+const chipOv=o=>o==null?'-':ng?`<span class="chip">${Math.round(o*100)}%</span>`:`<span class="chip ${cc(o)}">${o.toFixed(1)} · ${kat(o)}</span>`;
+function go(t){if(t==='form'&&!isAdmin())t='dash';tab=t;tabs.innerHTML=Object.keys(T).filter(k=>k!=='form'||isAdmin()).map(k=>`<button class="${k===t?'on':''}" onclick="go('${k}')">${T[k]}</button>`).join('')+(isAdmin()?`<button class="btn r s" style="margin:4px 4px 4px 12px" onclick="delForm()">Hapus modul</button>`:'');({dash,new:nf,hist,find,form:kform})[t]()}
+// ---------- dashboard (format sama dengan Patrol 5R)
+function dash(){const L=L0().filter(x=>!month||x.date.slice(0,7)===month).map(x=>({...x,s:calcG(F,x.answers)})),tms=L.flatMap(x=>x.tm||[]),cl=tms.filter(t=>t.status==='closed').length,P=POIN(),
+ o=ng?{max:100,step:25,fmt:z=>Math.round(z)+'%',yfmt:y=>y+'%'}:{max:5,step:1},
+ val=(a,p)=>{const z=a.map(x=>x.s.groups[p]).filter(q=>q!=null);return z.length?mean(z)*K:null},
+ rows=a=>{const r=P.map(p=>val(a,p));return [...r,mean(r.filter(z=>z!=null))]},
+ D=DEPTS.map(d=>rows(L.filter(x=>AR(x.bag).d===d))),ov=mean(L.map(x=>x.s.overall)),per=month?ML(month):'Semua periode',
+ bgs=AREAS.filter(a=>a.d===dept&&L.some(x=>x.bag===a.id)),bgS=bgs.map(a=>({name:a.b,color:bcol(a.b),values:rows(L.filter(x=>x.bag===a.id)).slice(0,P.length)})),
+ empty=t=>`<div class="empty-chart-placeholder">${t}</div>`;
+ if(!P.length){v.innerHTML=`<div class="card"><div class="empty-chart-placeholder">Form belum diisi. ${isAdmin()?'Buka tab <b>&nbsp;Kelola Form&nbsp;</b> untuk menambah poin dan pernyataan.':'Hubungi Admin SHE untuk mengisi form.'}</div></div>`;return}
+ v.innerHTML=`<div style="display:flex;gap:10px;align-items:center;margin-bottom:14px"><label style="margin:0;font-weight:600">Periode</label><select style="width:200px;" onchange="month=this.value;dash()"><option value="">Semua periode</option>${months().map(m=>`<option value="${m}" ${m===month?'selected':''}>${ML(m)}</option>`).join('')}</select></div>
+ <div class="grid g5" style="margin-bottom:14px"><div class="card kpi"><b>${L.length}</b><span>Inspeksi dilakukan</span></div><div class="card kpi"><b>${ov==null?'-':ng?Math.round(ov*100)+'%':ov.toFixed(1)}</b><span>${ng?'% Good':'Nilai rata-rata · '+(ov?kat(ov):'-')}</span></div><div class="card kpi"><b>${tms.length}</b><span>Total temuan</span></div><div class="card kpi"><b>${tms.length?Math.round(cl/tms.length*100):0}%</b><span>Follow-up selesai (${cl}/${tms.length})</span></div><div class="card kpi"><b style="color:var(--bad,#d9534f)">${tms.filter(od).length}</b><span>Temuan overdue</span></div></div>
+ <div class="card"><h3 style="margin:0 0 14px 0;font-size:14px;font-weight:700">Nilai per Poin per Departemen — ${per}</h3><div class="chart-container">${L.length?vbar(P,DEPTS.map((d,i)=>({name:d,color:DCOL[d],values:D[i].slice(0,P.length)})),o):empty('Belum ada data inspeksi')}</div></div>
+ <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:14px"><h3 style="margin:0;font-size:14px;font-weight:700">Nilai per Bagian — ${per}</h3><select style="width:220px;" onchange="dept=this.value;dash()">${deptOpts(dept)}</select></div><div class="chart-container">${bgs.length?vbar(P,bgS,o):empty('Belum ada data inspeksi untuk departemen ini')}</div></div>
+ <div class="grid g2"><div class="card"><h3 style="margin:0 0 12px 0;font-size:14px;font-weight:700">Tabel nilai per Departemen</h3><div class="tw"><table><tr><th>No</th><th>Poin</th>${DEPTS.map(d=>`<th><i class="dot" style="background:${DCOL[d]}"></i>${d}</th>`).join('')}<th>AVG</th></tr>${[...P,'RATA-RATA'].map((c,i)=>{const vs=D.map(d=>d[i]);return `<tr style="${i==P.length?'font-weight:700':''}"><td>${i<P.length?i+1:''}</td><td>${esc(c)}</td>${vs.map(z=>`<td>${cell(z)}</td>`).join('')}<td><b>${cell(mean(vs.filter(z=>z!=null)))}</b></td></tr>`}).join('')}</table></div></div>
+ <div class="card"><h3 style="margin:0 0 12px 0;font-size:14px;font-weight:700">Temuan & Follow-up per Departemen</h3><div class="tw"><table><tr><th>Departemen</th><th>Temuan</th><th>Closed</th><th>%</th><th>Overdue</th></tr>${DEPTS.map(d=>{const t=L.filter(x=>AR(x.bag).d===d).flatMap(x=>x.tm||[]),c=t.filter(z=>z.status==='closed').length;return `<tr><td><i class="dot" style="background:${DCOL[d]}"></i>${d}</td><td>${t.length}</td><td>${c}</td><td>${t.length?Math.round(c/t.length*100)+'%':'-'}</td><td class="${t.some(od)?'late':''}">${t.filter(od).length}</td></tr>`}).join('')}</table></div></div></div>`}
+// ---------- riwayat
+function hist(){const L=L0().filter(x=>fmatch(fl,x)).map(x=>({...x,s:calcG(F,x.answers)})).sort((a,b)=>b.date.localeCompare(a.date)),P=POIN();
+ v.innerHTML=fbar(fl,'fl','hist()',{dates:true})+`<div class="card tw"><div style="color:var(--mut);margin-bottom:8px">${L.length} inspeksi</div><table><tr><th>Tanggal</th><th>Departemen</th><th>Bagian</th><th>Inspektur</th>${P.map(p=>`<th>${esc(p)}</th>`).join('')}<th>Nilai</th><th>Temuan</th><th></th></tr>${L.map(x=>{const g=AR(x.bag);return `<tr><td>${x.date}</td><td>${g.d}</td><td>${g.b}</td><td>${esc(x.by)}</td>${P.map(p=>`<td>${cell(x.s.groups[p]==null?null:x.s.groups[p]*K)}</td>`).join('')}<td>${chipOv(x.s.overall)}</td><td>${(x.tm||[]).length}</td><td>${isAdmin()?`<button class="btn r s" onclick="di('${x.id}')">Hapus</button>`:''}</td></tr>`}).join('')||`<tr><td colspan=${P.length+7}>Tidak ada data</td></tr>`}</table></div>`}
+function di(i){if(!isAdmin())return;if(confirm('Hapus inspeksi ini?')){db.inspections=db.inspections.filter(x=>x.id!==i);save(db);hist()}}
+function find(){temuanTab({el:v,get:()=>L0().flatMap(x=>(x.tm||[]).map(t=>({x,t}))),grp:'Poin',save:()=>save(db),redo:find})}
+function delForm(){if(!isAdmin())return;if(!confirm(`Hapus modul "${F.name}" beserta dashboard & datanya?`))return;db.forms=db.forms.filter(x=>x.id!==F.id);db.inspections=db.inspections.filter(x=>x.formId!==F.id);save(db);location.href='../launcher.html'}
+// ---------- inspeksi baru (sama dengan Input Patroli 5R)
+let dr=null;const qn=id=>Q.find(i=>i.id===id);
+const lowFn=v=>isFind(F,v),grpOf=id=>qn(id).path.join(' › ')||'Umum',qText=id=>qn(id).t;
+function tree(ns,pre){let qi=0;return ns.map((n,i)=>{if(n.ch){const no=pre+(pre?'.':'')+(i+1);return `<div class="sec"><div class="gh">${no}. ${esc(n.t)}</div>${tree(n.ch,no)}</div>`}return qrow(n.id,'abcdefghijklmnopqrstuvwxyz'[qi++%26]+'.',esc(n.t),F.scale)}).join('')}
+function nf(){if(!Q.length){v.innerHTML=`<div class="card"><div class="empty-chart-placeholder">Form belum diisi. ${isAdmin()?'Buka tab <b>&nbsp;Kelola Form&nbsp;</b> untuk menambah poin dan pernyataan.':'Hubungi Admin SHE untuk mengisi form.'}</div></div>`;return}
+ if(!dr){const a=AREAS[0];dr={date:today(),dept:a.d,bag:a.id,sc:{},tm:[]}}const loose=F.tree.filter(n=>!n.ch);
+ v.innerHTML=`<div class="card"><div class="grid g3"><div><label>Departemen</label><select onchange="dr.dept=this.value;dr.bag=AREAS.find(a=>a.d===this.value).id;nf()">${deptOpts(dr.dept)}</select></div><div><label>Bagian</label><select onchange="dr.bag=this.value">${bagOpts(dr.dept,dr.bag)}</select></div><div><label>Tanggal</label><input type="date" value="${dr.date}" onchange="dr.date=this.value"></div></div><p style="margin:12px 0 0;font-size:12px;color:var(--mut)">Inspektur: <b>${me().nama}</b> · ${ng?'Not Good':'Nilai ≤'+(F.threshold||3)} wajib disertai temuan berfoto.${ng?'':' Skala: '+SCL.map((s,i)=>`<b>${i+1}</b> ${s}`).join(' · ')}</p></div><div class="sumbar" id="sum"></div>`+
+ F.tree.map((n,i)=>n.ch?`<div class="card"><h3 style="display:flex;justify-content:space-between"><span>${i+1}. ${esc(n.t)}</span><span id="ga_${n.id}"></span></h3>${tree(n.ch,String(i+1))}</div>`:'').join('')+(loose.length?`<div class="card"><h3>Umum</h3>${tree(loose,'')}</div>`:'')+`<button class="btn" onclick="sv()">Simpan inspeksi</button>`;
+ Q.forEach(i=>tmq(i.id));sum()}
+const nv=v=>ng?(v==='G'?1:0):+v;
+function sum(){const ids=n=>n.ch?flat(n.ch).map(z=>z.id):[n.id],avg=l=>mean(l.filter(i=>dr.sc[i]!=null).map(i=>nv(dr.sc[i]))),chip=m=>m==null?'':`<span class="chip ${ng?'':cc(m)}">${cell(m*K)}</span>`;
+ F.tree.forEach(n=>{const e=document.getElementById('ga_'+n.id);if(e)e.innerHTML=chip(avg(ids(n)))});
+ const a=avg(Q.map(i=>i.id)),done=Object.keys(dr.sc).length;
+ document.getElementById('sum').innerHTML=`<span>${ng?'% Good':'Nilai akhir'}</span><b>${a!=null?cell(a*K):'-'}</b>${a!=null&&!ng?`<span class="chip">${kat(a)}</span>`:''}<span style="margin-left:auto;opacity:.8;font-size:12px">${done}/${Q.length} butir dinilai</span>`}
+function sv(){const m=Q.find(i=>dr.sc[i.id]==null);if(m)return alert('Belum dinilai:\n'+m.t);
+ const e=chkTm(Q.map(i=>i.id),qText);if(e)return alert(e);
+ db.inspections.push({id:uid(),formId:F.id,date:dr.date,bag:dr.bag,by:me().nama,answers:dr.sc,tm:packTm()});
+ if(!save(db)){db.inspections.pop();return}dr=null;alert('Tersimpan');go('dash')}
+// ---------- kelola form (admin): poin > sub-poin > pernyataan
+let eg=null,nc=0;const nid=()=>'n'+(++nc),LT='abcdefghijklmnopqrstuvwxyz';
+function kfind(l,id){for(let i=0;i<l.length;i++){if(l[i].id===id)return{l,i};if(l[i].ch){const r=kfind(l[i].ch,id);if(r)return r}}}
+const kn=id=>{const r=kfind(eg.tree,id);return r.l[r.i]};
+function kinit(){const t=clone(F.tree),loose=t.filter(n=>!n.ch),sec=t.filter(n=>n.ch);if(loose.length)sec.push({id:nid(),t:'Umum',ch:loose});
+ nc=Math.max(nc,0,...(JSON.stringify(F.tree).match(/"n\d+"/g)||[]).map(z=>+z.slice(2,-1)));eg={name:F.name,icon:icoKey(F.icon),color:F.color,tree:sec}}
+const kctl=id=>`<button class="btn g s ib" onclick="kmv('${id}',-1)" title="Naik">${ico('arrow-up')}</button><button class="btn g s ib" onclick="kmv('${id}',1)" title="Turun">${ico('arrow-down')}</button><button class="btn r s ib" onclick="krm('${id}')" title="Hapus">${ico('x')}</button>`;
+function kdraw(l){let qi=0;return l.map(n=>n.ch?`<div class="sec" style="margin:10px 0"><div class="row"><span class="tg">Sub</span><input style="font-weight:650;background:#f2f6ff" value="${esc(n.t)}" placeholder="Judul sub-poin" oninput="kn('${n.id}').t=this.value">${kctl(n.id)}</div><div class="kids">${kdraw(n.ch)}<button class="btn g s" onclick="kadd('${n.id}','q')">${ico('plus')} Pertanyaan</button> <button class="btn g s" onclick="kadd('${n.id}','s')">${ico('plus')} Sub-poin</button></div></div>`:`<div class="row"><span class="tg">${LT[qi++%26]}.</span><input value="${esc(n.t)}" placeholder="Pernyataan / pertanyaan" oninput="kn('${n.id}').t=this.value">${kctl(n.id)}</div>`).join('')}
+function kform(){if(!eg)kinit();
+ v.innerHTML=`<div class="card"><h3>Info modul</h3><div class="grid g4"><div><label style="margin-top:0">Nama modul</label><input value="${esc(eg.name)}" oninput="eg.name=this.value"></div><div><label style="margin-top:0">Ikon</label>${icTrigger(eg.icon,eg.color,'openIconPicker(eg.icon,k=>{eg.icon=k;kform()},eg.color)')}</div><div><label style="margin-top:0">Warna</label><div class="sw" style="padding-top:6px">${MOD_COLORS.map(c=>`<button type="button" class="${c.toLowerCase()===String(eg.color).toLowerCase()?'on':''}" style="background:${c}" title="${c}" onclick="eg.color='${c}';kform()">${c.toLowerCase()===String(eg.color).toLowerCase()?ico('check'):''}</button>`).join('')}<input type="color" value="${eg.color}" title="Warna lain" onchange="eg.color=this.value;kform()"></div></div><div><label style="margin-top:0">Tipe penilaian</label><div style="padding-top:8px"><span class="chip">${ng?'Good / Not Good':'Skala 1–5'}</span></div></div></div><p style="margin:10px 0 0;color:var(--mut);font-size:12.5px">Susun poin, sub-poin, dan pernyataan. Perubahan berlaku untuk inspeksi berikutnya; riwayat lama tidak berubah. Pernyataan yang dihapus tidak lagi dihitung di dashboard.</p></div>`
+ +(eg.tree.length?eg.tree.map((n,i)=>`<div class="card"><div class="row"><span class="tg" style="width:auto;font-size:13px;color:var(--pri)">${i+1}.</span><input style="font-weight:700" value="${esc(n.t)}" placeholder="Nama poin (mis. RINGKAS)" oninput="kn('${n.id}').t=this.value">${kctl(n.id)}</div><div class="kids">${kdraw(n.ch)}<button class="btn g s" onclick="kadd('${n.id}','q')">${ico('plus')} Pertanyaan</button> <button class="btn g s" onclick="kadd('${n.id}','s')">${ico('plus')} Sub-poin</button></div></div>`).join(''):`<div class="card"><div class="empty-chart-placeholder">Belum ada poin. Klik <b>&nbsp;+ Poin&nbsp;</b> untuk memulai.</div></div>`)
+ +`<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn g" onclick="kadd(null,'s')">${ico('plus')} Poin</button><button class="btn" onclick="ksave()">Simpan perubahan</button><button class="btn g" onclick="eg=null;kform()">Batalkan perubahan</button></div>`}
+function kadd(p,k){const n=k==='s'?{id:nid(),t:'',ch:[{id:nid(),t:''}]}:{id:nid(),t:''};(p?kn(p).ch:eg.tree).push(n);kform()}
+function kmv(id,d){const r=kfind(eg.tree,id),j=r.i+d;if(j<0||j>=r.l.length)return;[r.l[r.i],r.l[j]]=[r.l[j],r.l[r.i]];kform()}
+function krm(id){const r=kfind(eg.tree,id),n=r.l[r.i];if(n.ch&&n.ch.length&&!confirm('Hapus poin beserta seluruh isinya?'))return;r.l.splice(r.i,1);kform()}
+const kprune=l=>l.map(n=>n.ch?{id:n.id,t:n.t.trim(),ch:kprune(n.ch)}:{id:n.id,t:n.t.trim()}).filter(n=>n.t&&(!n.ch||n.ch.length));
+function ksave(){const t=kprune(eg.tree);if(!eg.name.trim())return alert('Nama modul wajib diisi');if(!flat(t).length)return alert('Isi minimal 1 pernyataan di dalam poin');
+ Object.assign(F,{name:eg.name.trim(),icon:eg.icon,color:eg.color,tree:t});if(!save(db))return;Q=flat(F.tree);dr=null;eg=null;
+ document.querySelector('.top h1').innerHTML=ico(F.icon)+' '+esc(F.name);alert('Form tersimpan. Berlaku untuk inspeksi berikutnya.');kform()}
+go(qs.get('tab')==='form'&&isAdmin()?'form':'dash');
+</script></body></html>
+

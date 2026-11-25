@@ -1,0 +1,17 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Modul Baru</title><link rel="stylesheet" href="../css/style.css"><link rel="stylesheet" href="../css/layout.css"></head>
+<body><div class="wrap" style="max-width:1020px!important"><div class="fbwrap"><div class="card"><h3>Buat modul inspeksi baru</h3>
+<p style="color:var(--mut);margin-top:-4px">Modul dibuat dengan format yang sama seperti Patrol 5R (dashboard, input, riwayat, temuan) dan formnya masih kosong. Poin & pernyataan diisi di tab <b>Kelola Form</b> setelah modul dibuat.</p>
+<label>Nama modul</label><input id="nm" placeholder="mis. Pembuangan Limbah" oninput="pv()">
+<label>Ikon modul</label><input type="hidden" id="ic" value="clipboard-list"><div id="ict"></div>
+<div class="grid g2" style="margin-top:2px"><div><label>Warna</label><div class="sw" id="sws" style="padding-top:4px"></div><input type="color" id="co" value="#3f76cc" style="display:none"></div><div><label>Tipe penilaian</label><select id="sc"><option value="5">Skala 1–5</option><option value="ng">Good / Not Good</option></select></div></div>
+<p style="font-size:12px;color:var(--mut)">Tipe penilaian tidak dapat diubah setelah modul dibuat. Temuan (Not Good / nilai ≤3) otomatis wajib foto.</p>
+<button class="btn" onclick="sv()">Buat modul</button></div>
+<div><p class="pvl">Pratinjau di halaman Apps</p><div class="pv" id="pvw"></div></div></div></div>
+<script src="../js/data.js"></script><script src="../js/icons.js"></script><script src="../js/store.js"></script>
+<script>guard();guardAdmin();topbar(`${ico('plus')} Modul Baru`,true);
+function pv(){const k=ic.value,c=co.value,n=nm.value.trim()||'Nama modul';
+ ict.innerHTML=icTrigger(k,c,"openIconPicker(ic.value,x=>{ic.value=x;pv()},co.value)");
+ sws.innerHTML=MOD_COLORS.map(x=>`<button type="button" class="${x.toLowerCase()===c.toLowerCase()?'on':''}" style="background:${x}" title="${x}" onclick="co.value='${x}';pv()">${x.toLowerCase()===c.toLowerCase()?ico('check'):''}</button>`).join('')+`<input type="color" value="${c}" title="Warna lain" onchange="co.value=this.value;pv()">`;
+ document.getElementById("pvw").innerHTML=`<div class="app"><div class="ic" style="background:${c}1f;color:${c}">${ico(k)}</div><div class="nm"><span>${esc(n)}</span><small>${sc.value==='ng'?'Good / Not Good':'Skala 1–5'}</small></div></div>`}
+sc.onchange=pv;pv();
+function sv(){if(!nm.value.trim())return alert('Isi nama modul');const db=load(),f={id:uid(),name:nm.value.trim(),icon:ic.value,color:co.value,scale:sc.value,threshold:3,tree:[]};db.forms.push(f);save(db);location.href='module.html?id='+f.id+'&tab=form'}</script></body></html>

@@ -1,0 +1,65 @@
+/* Layout & proporsi halaman (dipakai Patrol 5R dan semua modul). Warna mengikuti tema di style.css */
+*, *::before, *::after { box-sizing: border-box; }
+body { font-size: 13.5px; background-color: var(--bg); }
+.wrap { max-width: min(98%, 1600px) !important; width: 100% !important; margin: 0 auto; padding: 24px 16px 48px; }
+
+/* Status Overdue Tetap 1 Baris */
+td span, .late, .chip { white-space: nowrap; }
+
+/* Tabel Rapi & Compact */
+table th, table td { padding: 9px 11px !important; font-size: 12.5px; }
+table th { font-size: 11px; }
+
+/* KONSISTENSI LEBAR KOLOM KHUSUS TABEL TEMUAN */
+.card.tw table:has(button.g.s) { table-layout: fixed; width: 100%; }
+.card.tw table:has(button.g.s) th:nth-child(1), .card.tw table:has(button.g.s) td:nth-child(1) { width: 80px; }   /* Dept */
+.card.tw table:has(button.g.s) th:nth-child(2), .card.tw table:has(button.g.s) td:nth-child(2) { width: 80px; }   /* Bagian */
+.card.tw table:has(button.g.s) th:nth-child(3), .card.tw table:has(button.g.s) td:nth-child(3) { width: 90px; }   /* Temuan (foto) */
+.card.tw table:has(button.g.s) th:nth-child(4), .card.tw table:has(button.g.s) td:nth-child(4) { width: 140px; }  /* Keterangan */
+.card.tw table:has(button.g.s) th:nth-child(5), .card.tw table:has(button.g.s) td:nth-child(5) { width: 120px; }  /* Perbaikan */
+.card.tw table:has(button.g.s) th:nth-child(6), .card.tw table:has(button.g.s) td:nth-child(6) { width: 130px; }  /* 5R / K3 */
+.card.tw table:has(button.g.s) th:nth-child(7), .card.tw table:has(button.g.s) td:nth-child(7) { width: 85px; }   /* PIC */
+.card.tw table:has(button.g.s) th:nth-child(8), .card.tw table:has(button.g.s) td:nth-child(8) { width: 95px; }   /* Due date */
+.card.tw table:has(button.g.s) th:nth-child(9), .card.tw table:has(button.g.s) td:nth-child(9) { width: 90px; }   /* Update (foto) */
+.card.tw table:has(button.g.s) th:nth-child(10), .card.tw table:has(button.g.s) td:nth-child(10) { width: 80px; } /* Status */
+.card.tw table:has(button.g.s) th:nth-child(11), .card.tw table:has(button.g.s) td:nth-child(11) { width: 75px; } /* Aksi */
+
+/* Grid KPI Card & Layout Responsif */
+.grid.g5 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important; gap: 14px; }
+.grid.g4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important; gap: 14px; }
+.grid.g3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important; gap: 14px; }
+.grid.g2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important; gap: 14px; }
+
+.card.kpi { padding: 14px 18px 14px 20px !important; margin-bottom: 0; display: flex; flex-direction: column; justify-content: center; }
+.card.kpi b { font-size: 1.55rem !important; line-height: 1.2; }
+.card.kpi span { font-size: 12px !important; color: var(--mut); margin-top: 4px; }
+/* aksen KPI: biru; kartu ke-5 (overdue) merah pastel */
+.grid.g5 .kpi:nth-child(5):before { background: var(--r300); }
+.grid.g5 .kpi:nth-child(5):after { background: var(--r100); }
+.grid.g5 .kpi:nth-child(5) b { color: var(--r700) !important; }
+.grid.g5 .kpi:nth-child(3):before { background: #e6b83f; }
+.grid.g5 .kpi:nth-child(4):before { background: #3fa883; }
+
+/* Kontainer Card Dashboard & Modul */
+.card { margin-bottom: 16px; padding: 18px; }
+.chart-container { width: 100%; overflow: visible; }
+
+/* Placeholder Data Kosong */
+.empty-chart-placeholder { width: 100%; min-height: 160px; display: flex; align-items: center; justify-content: center; background: var(--b50); border: 1px dashed var(--b300); border-radius: 12px; color: var(--mut); font-size: 13px; font-weight: 500; text-align: center; padding: 16px; }
+
+/* Elemen Input & Select */
+.card select, .card input[type="date"], .card input[type="text"] { width: 100%; max-width: 100%; }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+@media (max-width: 768px) {
+  .grid.g4, .grid.g5, .grid.g3, .grid.g2 { grid-template-columns: 1fr !important; }
+}
+/* Tabel Temuan: chip Poin panjang boleh turun baris, bisa digeser di layar sempit */
+.chipw { white-space: normal !important; display: inline-block; max-width: 100%; line-height: 1.35; word-break: break-word; border-radius: 12px; }
+.card.tw table:has(button.g.s) { min-width: 1150px; }
+.card.tw table:has(button.g.s) td { overflow-wrap: anywhere; vertical-align: top; }
+.qsub { color: var(--mut); font-size: 11px; margin-top: 3px; line-height: 1.35; }
+
+/* tabel di halaman lain (mis. Manajemen User) tidak ikut aturan lebar kolom tabel Temuan */
+.card.tw.nofix table { table-layout: auto !important; min-width: 0 !important; width: 100%; }
+.card.tw.nofix table th, .card.tw.nofix table td { width: auto !important; }

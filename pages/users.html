@@ -1,0 +1,18 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Manajemen User</title><link rel="stylesheet" href="../css/style.css"><link rel="stylesheet" href="../css/layout.css"></head>
+<body><div class="wrap"><div id="v"></div></div><dialog id="dg"></dialog>
+<script src="../js/data.js"></script><script src="../js/icons.js"></script><script src="../js/store.js"></script>
+<script>
+guard();guardAdmin();topbar(`${ico('users')} Manajemen User`,true);let db=load();
+const isAd=u=>u.role==='admin'||u.role==='superadmin',nAdm=()=>db.users.filter(isAd).length,RL={admin:'Admin SHE',karyawan:'Karyawan SHE'};
+function render(){v.innerHTML=`<div class="card"><h3>Tambah akun</h3><div class="grid g4"><div><label>NIK</label><input id="nn" placeholder="mis. 200002"></div><div><label>Nama</label><input id="nmm"></div><div><label>Password (min. 4 karakter)</label><input id="np"></div><div><label>Role</label><select id="nr"><option value="karyawan">Karyawan SHE</option><option value="admin">Admin SHE</option></select></div></div><button class="btn" style="margin-top:14px" onclick="add()">${ico('plus')} Tambah akun</button></div>
+ <div class="card tw nofix"><h3>Daftar akun (${db.users.length})</h3><table><tr><th>NIK</th><th>Nama</th><th>Role</th><th></th></tr>${db.users.map(u=>`<tr><td>${esc(u.nik)}</td><td>${esc(u.nama)}${u.nik===me().nik?' <span class="chip">Anda</span>':''}</td><td><span class="chip ${isAd(u)?'c5':''}">${RL[isAd(u)?'admin':'karyawan']}</span></td><td style="white-space:nowrap"><button class="btn g s" onclick="ed('${u.nik}')">${ico('pencil')} Edit</button> <button class="btn r s" onclick="del('${u.nik}')">${ico('trash')} Hapus</button></td></tr>`).join('')}</table></div>`}
+function add(){const nik=nn.value.trim(),nama=nmm.value.trim(),pw=np.value;if(!nik||!nama)return alert('NIK dan nama wajib diisi');if(pw.length<4)return alert('Password minimal 4 karakter');if(db.users.some(u=>u.nik===nik))return alert('NIK sudah terdaftar');
+ db.users.push({nik,nama,pass:pw,role:nr.value});save(db);render()}
+function ed(nik){const u=db.users.find(x=>x.nik===nik);dg.innerHTML=`<h3 style="margin-top:0">Edit akun ${esc(u.nik)}</h3><label>Nama</label><input id="e1" value="${esc(u.nama)}"><label>Role</label><select id="e2"><option value="karyawan" ${!isAd(u)?'selected':''}>Karyawan SHE</option><option value="admin" ${isAd(u)?'selected':''}>Admin SHE</option></select><label>Password baru (kosongkan jika tidak diubah)</label><input id="e3"><div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end"><button class="btn g" onclick="dg.close()">Batal</button><button class="btn" onclick="es('${u.nik}')">Simpan</button></div>`;dg.showModal()}
+function es(nik){const u=db.users.find(x=>x.nik===nik);if(!e1.value.trim())return alert('Nama wajib diisi');if(e3.value&&e3.value.length<4)return alert('Password minimal 4 karakter');
+ if(isAd(u)&&e2.value==='karyawan'&&(nAdm()<=1||nik===me().nik))return alert(nik===me().nik?'Tidak bisa menurunkan role akun sendiri.':'Harus ada minimal satu Admin SHE.');
+ u.nama=e1.value.trim();u.role=e2.value;if(e3.value)u.pass=e3.value;save(db);if(nik===me().nik){const s=me();s.nama=u.nama;sessionStorage.setItem(SES,JSON.stringify(s));location.reload();return}dg.close();render()}
+function del(nik){const u=db.users.find(x=>x.nik===nik);if(nik===me().nik)return alert('Akun yang sedang dipakai tidak bisa dihapus.');if(isAd(u)&&nAdm()<=1)return alert('Harus ada minimal satu Admin SHE.');
+ if(confirm(`Hapus akun ${u.nama} (${u.nik})?`)){db.users=db.users.filter(x=>x.nik!==nik);save(db);render()}}
+render();
+</script></body></html>
