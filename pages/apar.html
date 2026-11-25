@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SHE New Armada - APAR / FireCheck</title>
+<script src="../js/theme.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -58,7 +59,22 @@
   table.yr th:first-child,table.yr td:first-child{text-align:left}
   @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
   .pop{animation:pop .18s ease-out}
+  .theme-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0 !important;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.theme-btn svg.si {
+  width: 17px;
+  height: 17px;
+  display: block;
+}
 </style>
+<link rel="stylesheet" href="../css/dark.css">
 </head>
 <body class="font-sans text-slate-800 antialiased min-h-screen flex flex-col">
 
@@ -74,6 +90,7 @@
   </div>
   <div class="flex items-center gap-2 md:gap-4 text-xs">
     <div class="flex items-center gap-2 hd-user"><i class="fa-solid fa-circle-user text-base" style="color:#8aaeea"></i><span id="uName" class="hidden sm:inline"></span></div>
+    <span id="themeSlot"></span>
     <button onclick="logout()" class="hd-out px-3 py-1.5 rounded-md transition text-xs flex items-center gap-1.5 shadow-sm">
       <i class="fa-solid fa-right-from-bracket"></i><span class="hidden sm:inline">Keluar</span>
     </button>

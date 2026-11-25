@@ -1,0 +1,138 @@
+/* =====================================================================
+   SHE New Armada - Mode gelap. Aktif saat <html data-theme="dark">.
+   Muat SETELAH style.css dan layout.css.
+   ===================================================================== */
+.theme-fab{position:fixed;top:16px;right:16px;z-index:50}
+.theme-fab .btn{padding:9px 11px;box-shadow:0 4px 14px rgba(31,42,68,.12)}
+
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0e1424;--card:#161f35;--tx:#e6ecf8;--mut:#93a2c2;--bd:#25314d;--bd2:#33426a;
+  --pri:#4a82d8;--pri-d:#6b9be0;--pri2:#6b9be0;
+  --b50:#1a2542;--b100:#1f2d50;--b200:#2c3f6b;--b300:#41598f;
+  --bad:#e8858c;--r50:#2a1a24;--r100:#3a2029;--r200:#5a2d38;--r300:#b9656d;--r700:#f3a6ac;
+  --ok:#4fbf98;--ok-l:#173328;--ok-d:#86dcb9;--warn:#e0a24f;
+  --sh:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.25);
+  --sh2:0 2px 4px rgba(0,0,0,.35),0 14px 32px rgba(0,0,0,.4);
+}
+[data-theme="dark"] body{background:var(--bg);color:var(--tx)}
+[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#33426a;border-color:var(--bg)}
+
+/* permukaan yang tadinya putih */
+[data-theme="dark"] .top{background:rgba(14,20,36,.88);box-shadow:none}
+[data-theme="dark"] .top .usr,
+[data-theme="dark"] input,[data-theme="dark"] select,[data-theme="dark"] textarea,
+[data-theme="dark"] .app,[data-theme="dark"] .seg button,[data-theme="dark"] .opts span,
+[data-theme="dark"] .scale span,[data-theme="dark"] .ph>div,[data-theme="dark"] .ic-trg,
+[data-theme="dark"] .pk-i,[data-theme="dark"] .pk-c button,[data-theme="dark"] .demo button,
+[data-theme="dark"] .btn.o,[data-theme="dark"] dialog{background-color:var(--card);color:var(--tx)}
+[data-theme="dark"] select{background-color:var(--card)}
+[data-theme="dark"] input[type=file]{background:var(--b50)}
+[data-theme="dark"] input[type=color]{background:var(--card)}
+[data-theme="dark"] input::placeholder{color:#6f7fa3}
+[data-theme="dark"] .brand .lg:after,[data-theme="dark"] .sw button{border-color:var(--card)}
+[data-theme="dark"] .brand .lg{background:linear-gradient(145deg,var(--b200),var(--b100));color:#cfe0f7}
+[data-theme="dark"] .top .av{background:var(--r100);color:var(--r700)}
+
+/* teks biru tua -> biru terang */
+[data-theme="dark"] .btn.g,[data-theme="dark"] .chip,[data-theme="dark"] .jt th,
+[data-theme="dark"] .pk-i span,[data-theme="dark"] .sumbar .chip,
+[data-theme="dark"] input[type=file]::file-selector-button{color:#cfe0f7}
+[data-theme="dark"] .tabs button,[data-theme="dark"] .seg button,[data-theme="dark"] .pk-c button,
+[data-theme="dark"] th,[data-theme="dark"] .scale span{color:#a9bbdd}
+[data-theme="dark"] .tabs .on{background:var(--card);color:#cfe0f7}
+[data-theme="dark"] .tabs button:hover{background:rgba(255,255,255,.05);color:#cfe0f7}
+[data-theme="dark"] .btn:hover{box-shadow:0 4px 12px rgba(0,0,0,.35)}
+[data-theme="dark"] .gh,[data-theme="dark"] .hero h2,[data-theme="dark"] .sumbar b{color:#9dbff0}
+[data-theme="dark"] .sec .sec>.gh{color:#8aa8d8}
+[data-theme="dark"] .seg .on{background:var(--pri);color:#fff}
+[data-theme="dark"] .opts input:checked+span{background:var(--pri);color:#fff}
+[data-theme="dark"] .pk-c .on{background:var(--pri);color:#fff}
+
+/* tabel & status */
+[data-theme="dark"] tr:hover td{background:rgba(255,255,255,.03)}
+[data-theme="dark"] .odr td{background:var(--r50)}
+[data-theme="dark"] .pill{background:var(--b100);color:#a9bbdd}
+[data-theme="dark"] .pill.closed{box-shadow:inset 0 0 0 1px #24513f}
+[data-theme="dark"] .c5{background:#173a2d;color:#86dcb9}
+[data-theme="dark"] .c4{background:#25391d;color:#b4dc8e}
+[data-theme="dark"] .c3{background:#3a3217;color:#f0d27c}
+[data-theme="dark"] .c2{background:#3d2a1b;color:#f2b07d}
+[data-theme="dark"] .c1{background:var(--r100);color:var(--r700)}
+[data-theme="dark"] .kpi:after{background:var(--b100);opacity:.5}
+[data-theme="dark"] .grid.g5 .kpi:nth-child(5):after{background:var(--r100)}
+[data-theme="dark"] .empty-chart-placeholder{background:var(--b50);border-color:var(--b200)}
+
+/* halaman Apps */
+[data-theme="dark"] .hero{background:linear-gradient(120deg,var(--card) 35%,var(--b100))}
+[data-theme="dark"] .app.add{background:var(--b50)}
+[data-theme="dark"] .app .ic{filter:brightness(1.15)}
+[data-theme="dark"] .sumbar{background:linear-gradient(100deg,var(--b100),var(--card))}
+
+/* grafik SVG (warna teks/garis ditulis langsung di atribut SVG) */
+[data-theme="dark"] svg text{fill:#b6c4e0}
+[data-theme="dark"] svg line{stroke:#2a3857}
+
+/* input inline di Kelola Form */
+[data-theme="dark"] input[style*="#f2f6ff"]{background:var(--b50)!important}
+[data-theme="dark"] .find small{color:var(--r700)}
+
+/* dialog & pemilih ikon */
+[data-theme="dark"] dialog::backdrop{background:rgba(3,6,14,.65)}
+[data-theme="dark"] .pk-f{background:var(--b50)}
+[data-theme="dark"] .pk-i span{background:var(--b50)}
+[data-theme="dark"] .pk-i.on{background:var(--b50)}
+[data-theme="dark"] .ic-trg:hover{box-shadow:0 0 0 3px var(--b100)}
+
+/* login */
+[data-theme="dark"] body.login{background:var(--bg)}
+[data-theme="dark"] .lg-side{background:linear-gradient(155deg,#141f3a 0%,#1a2b52 55%,#203662 100%)}
+[data-theme="dark"] .lg-side:before{background:radial-gradient(circle,rgba(240,130,140,.28),rgba(240,130,140,0) 70%)}
+[data-theme="dark"] .lg-side:after{border-color:rgba(255,255,255,.05)}
+[data-theme="dark"] .lg-brand .lg,[data-theme="dark"] .lg-feat .ib2{background:var(--card);color:#9dbff0}
+[data-theme="dark"] .lg-brand small,[data-theme="dark"] .lg-foot,[data-theme="dark"] .lg-hero p{color:#9fb0d2}
+[data-theme="dark"] .lg-feat div{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1)}
+[data-theme="dark"] .lg-hero h2 em{color:#f3a6ac}
+[data-theme="dark"] .demo{background:var(--b50)}
+
+/* ===== halaman APAR (Tailwind + CSS sendiri) ===== */
+[data-theme="dark"] .hd{background:rgba(14,20,36,.92);color:var(--tx)}
+[data-theme="dark"] .hd-btn,[data-theme="dark"] .sb-back{background:var(--b100);color:#cfe0f7;border-color:var(--b200)}
+[data-theme="dark"] .hd-lg{background:linear-gradient(145deg,var(--b200),var(--b100));color:#cfe0f7}
+[data-theme="dark"] .hd-ib,[data-theme="dark"] .hd-user{color:#a9bbdd}
+[data-theme="dark"] .sb{background:var(--card);color:#a9bbdd}
+[data-theme="dark"] .nv-on,[data-theme="dark"] .nvc-on{background:var(--b100);color:#cfe0f7}
+[data-theme="dark"] .nv-h:hover,[data-theme="dark"] .nvc-h:hover{background:var(--b50);color:#cfe0f7}
+[data-theme="dark"] .nvg{background:var(--bg)}
+[data-theme="dark"] .bg-white,[data-theme="dark"] .bg-slate-50{background-color:var(--card)!important}
+[data-theme="dark"] .bg-slate-100{background-color:var(--bg)!important}
+[data-theme="dark"] .bg-sky-50,[data-theme="dark"] .bg-sky-100\/60{background-color:var(--b100)!important}
+[data-theme="dark"] .bg-amber-50{background-color:#3a3217!important}
+[data-theme="dark"] .bg-rose-50{background-color:var(--r100)!important}
+[data-theme="dark"] .border-slate-200,[data-theme="dark"] .border-slate-100,[data-theme="dark"] .border-slate-300{border-color:var(--bd)!important}
+[data-theme="dark"] .border-sky-200{border-color:var(--b200)!important}
+[data-theme="dark"] .border-amber-200{border-color:#5a4a1e!important}
+[data-theme="dark"] .border-rose-200{border-color:var(--r200)!important}
+[data-theme="dark"] .text-slate-900,[data-theme="dark"] .text-slate-800,[data-theme="dark"] .text-slate-700{color:var(--tx)!important}
+[data-theme="dark"] .text-slate-600,[data-theme="dark"] .text-slate-500{color:#a9bbdd!important}
+[data-theme="dark"] .text-slate-400{color:#7f90b3!important}
+[data-theme="dark"] .text-rose-600,[data-theme="dark"] .text-rose-500{color:var(--r700)!important}
+[data-theme="dark"] .text-blue-600{color:#8fb4ea!important}
+[data-theme="dark"] .inp{background:var(--card);color:var(--tx);border-color:var(--bd2)}
+[data-theme="dark"] .lbl{color:var(--mut)}
+[data-theme="dark"] .btn-g{background:var(--card);color:#cfe0f7;border-color:var(--bd2)}
+[data-theme="dark"] .btn-g:hover{background:var(--b50)}
+[data-theme="dark"] .btn-t{background:var(--b100);color:#cfe0f7;border-color:var(--b200)}
+[data-theme="dark"] .btn-r{background:var(--r100);color:var(--r700);border-color:var(--r200)}
+[data-theme="dark"] .ab.v{background:var(--b100);color:#9dbff0}
+[data-theme="dark"] .ab.q{background:#232a52;color:#a5b4f0}
+[data-theme="dark"] .ab.e{background:#3a3217;color:#f0d27c}
+[data-theme="dark"] .ab.d{background:var(--r100);color:var(--r700)}
+[data-theme="dark"] .bdg.g{background:#173a2d;color:#86dcb9}
+[data-theme="dark"] .bdg.r{background:var(--r100);color:var(--r700)}
+[data-theme="dark"] .bdg.y{background:#3a3217;color:#f0d27c}
+[data-theme="dark"] .bdg.b{background:var(--b100);color:#9dbff0}
+[data-theme="dark"] .bdg.s{background:var(--b50);color:#a9bbdd}
+[data-theme="dark"] table.tb th{background:var(--b50);color:#a9bbdd;border-color:var(--bd)}
+[data-theme="dark"] table.tb td{color:#c3d0ea;border-color:var(--bd)}
+[data-theme="dark"] table.tb tbody tr:hover{background:rgba(255,255,255,.03)}
