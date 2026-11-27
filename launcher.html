@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>SHE - Apps</title>
+    <link rel="icon" type="image/svg+xml" href="assets/she-logo.svg">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme.css">
+    <script src="js/storage.js"></script>
+    <script src="js/theme.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="wrap lw">
+        <div class="hero">
+            <div class="hero-tx"><small id="dt"></small>
+                <h2 id="gr"></h2>
+                <p>Safety, Health &amp; Environment · PT New Armada</p>
+            </div>
+            <div class="hero-st" id="st"></div>
+        </div>
+        <div id="apps"></div>
+    </div>
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/store.js"></script>
+    <script>if (!guard()) throw new Error('Akses ditolak'); topbar('SHE New Armada', false); const db = load(), u = me();
+        const hr = new Date().getHours();
+        gr.innerHTML = `${hr < 11 ? 'Selamat pagi' : hr < 15 ? 'Selamat siang' : hr < 19 ? 'Selamat sore' : 'Selamat malam'}, ${esc(u.nama)} 👋`;
+        dt.textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const ins = [...(canAccessModule(u, 'patrol5r', db) ? (db.p5 || []).filter(x => canViewData(u, x, 'patrol5r')) : []), ...db.inspections.filter(x => canAccessModule(u, x.formId, db) && canViewData(u, x, 'patrol5r'))], tm = ins.flatMap(x => x.tm || []), op = tm.filter(t => t.status === 'open' || t.status === 'diproses').length;
+        const moduleCount = Number(canAccessModule(u, 'apar', db)) + Number(canAccessModule(u, 'patrol5r', db)) + db.forms.filter(f => canAccessModule(u, f.id, db)).length;
+        st.innerHTML = [['fa-clipboard-check', ins.length, 'Inspeksi'], ['fa-triangle-exclamation', op, 'Temuan open'], ['fa-cubes-stacked', moduleCount, 'Modul']].map(([i, n, l]) => `<div><span><i class="fa-solid ${i}" aria-hidden="true"></i></span><b>${n}</b><small>${l}</small></div>`).join('');
+        const tile = (on, ic, bg, n, d, x = '') => `<div class="app" onclick="${on}">${x}<div class="ic" style="background:${bg}"><i class="fa-solid ${ic}" aria-hidden="true"></i></div><div class="nm">${n}</div><div class="ds">${d}</div><i class="go">→</i></div>`;
+        const sec = (t, h) => `<div class="sect"><h3>${t}</h3><div class="apps">${h}</div></div>`;
+        let main = '';
+        if (canAccessModule(u, 'apar', db)) main += tile("location.href='pages/apar.html'", 'fa-fire-extinguisher', 'linear-gradient(135deg,#d64545,#f08a8a)', 'APAR / FireCheck', 'Pemeriksaan &amp; monitoring alat pemadam api');
+        if (canAccessModule(u, 'patrol5r', db)) main += tile("location.href='pages/patrol5r.html'", 'fa-broom', 'linear-gradient(135deg,#1e5bd8,#6aa0ff)', 'Patrol 5R &amp; K3', 'Patroli 5R dan K3 area kerja');
+        if (isAdmin()) main += tile("location.href='pages/users.html'", 'fa-users', 'linear-gradient(135deg,#64748b,#94a3b8)', 'Manajemen User', 'Kelola akun &amp; role pengguna');
+        let mod = ''; db.forms.forEach(f => { if (canAccessModule(u, f.id, db)) mod += tile(`location.href='pages/module.html?id=${f.id}'`, moduleIconClass(f.icon), `linear-gradient(135deg,${f.color},${f.color}aa)`, esc(f.name), 'Modul inspeksi', `<span class="x" onclick="event.stopPropagation();del('${f.id}')">×</span>`); });
+        if (isAdmin()) mod += tile("location.href='pages/form-builder.html'", 'fa-plus', '#e8eefb;color:#1e5bd8', 'Modul Baru', 'Buat modul inspeksi sendiri').replace('class="app"', 'class="app add"');
+        let h = sec('Aplikasi Utama', main) + sec('Modul Inspeksi', mod);
+        apps.innerHTML = h;
+        if (isAdmin()) document.querySelector('.sect:nth-child(2) h3').insertAdjacentHTML('afterend', `<div class="adm"><button class="btn g s" onclick="document.body.classList.toggle('manage')">Kelola / Hapus</button> <button class="btn g s" onclick="if(confirm('Reset semua data demo?'))resetDemo()">Reset demo</button></div>`);
+        function del(id) { const f = db.forms.find(x => x.id === id); if (!confirm(`Hapus modul "${f.name}" beserta dashboard & semua datanya?`)) return; db.forms = db.forms.filter(x => x.id !== id); db.inspections = db.inspections.filter(x => x.formId !== id); save(db); location.reload() }</script>
+</body>
+
+</html>

@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Patrol 5R & K3</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/she-logo.svg">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/theme.css">
+  <script src="../js/storage.js"></script>
+  <script src="../js/theme.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="tabs" id="tabs"></div>
+    <div id="v"></div>
+  </div>
+
+  <script src="../js/data.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/patrol-config.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/xlsx-lite.js"></script>
+  <script src="../js/report.js"></script>
+  <script>
+    if (!guard() || !guardModule('patrol5r')) throw new Error('Akses ditolak');
+    let db = load();
+    topbar('🧹 Patrol 5R & K3', true);
+
+    const T = {
+      dash: 'Dashboard',
+      new: 'Input Patroli',
+      hist: 'Riwayat Inspeksi',
+      find: 'Temuan',
+      pic: 'PIC Area',
+      jad: 'Jadwal Patroli',
+      rule: 'Ketentuan Penilaian',
+      form: 'Kelola Form',
+      fields: 'Kolom Input'
+    };
+
+    const patrolRecords = () => db.p5.filter(x => canViewData(me(), x, 'patrol5r', db));
+    const patrolAreas = () => getAreas(db).filter(area => canViewData(me(), { bag: area.id }, 'patrol5r', db));
+    const patrolDepts = () => [...new Set(patrolAreas().map(area => area.d))];
+    const corePatrolFields = new Set(PATROL_CORE_FIELD_KEYS);
+    function getPatrolFormFields() {
+      const saved = Array.isArray(db.patrolFields) ? db.patrolFields : [];
+      const core = PATROL_FORM_FIELDS.map(field => {
+        const stored = saved.find(item => item && item.key === field.key);
+        return { ...field, label: stored && typeof stored.label === 'string' && stored.label.trim() ? stored.label : field.label };
+      });
+      const seen = new Set(core.map(field => field.key));
+      const extra = saved.filter(field => field && typeof field.key === 'string' &&
+        /^custom_[A-Za-z0-9]+$/.test(field.key) && !seen.has(field.key) && typeof field.label === 'string')
+        .map(field => {
+          seen.add(field.key);
+          const type = ['text', 'date', 'number', 'select'].includes(field.type) ? field.type : 'text';
+          return {
+            key: field.key,
+            label: field.label,
+            type,
+            required: !!field.required,
+            options: Array.isArray(field.options) ? field.options.filter(option => typeof option === 'string') : []
+          };
+        });
+      return [...core, ...extra];
+    }
+    const canManagePatrol = () => canManageModule(me(), 'patrol5r');
+    const canInputPatrol = () => canManagePatrol() || hasRole(me(), 'supervisor', db);
+    const picOnly = () => {
+      const roles = normalizeRoles(me());
+      return roles.length === 1 && roles[0] === 'pic_area';
+    };
+    const picName = areaId => {
+      const assigned = (db.areaPics || {})[areaId], user = db.users.find(account => account.nik === assigned);
+      return user ? user.nama : assigned || '';
+    };
+    const months = () => [...new Set(patrolRecords().map(x => x.date.slice(0, 7)))].sort();
+    let tab = 'dash', month = '', dept = getDepts(db)[0];
+
+    const rAvg = (x, r) => mean(x.sc[r] || []),
+          allAvg = x => mean(R5.flatMap(r => x.sc[r] || []));
+
+    const cc = v => 'c' + Math.max(1, Math.min(5, Math.round(v))),
+          f1 = v => v == null ? '-' : v.toFixed(1);
+
+    function go(t) {
+      if (picOnly() && !['hist', 'find'].includes(t)) { alert('Akses ditolak'); t = 'hist'; }
+      if (t === 'new' && !canInputPatrol()) { alert('Akses ditolak'); t = 'dash'; }
+      if (t === 'pic' && !isAdmin()) { alert('Akses ditolak'); t = 'dash'; }
+      if (['form', 'fields'].includes(t) && !isAdmin()) { alert('Akses ditolak'); t = 'dash'; }
+      tab = t;
+      const visibleTabs = picOnly() ? ['hist', 'find'] : Object.keys(T);
+      tabs.innerHTML = visibleTabs.filter(k => (k !== 'new' || canInputPatrol()) && (!['form', 'fields', 'pic'].includes(k) || isAdmin())).map(k => `<button class="${k === t ? 'on' : ''}" onclick="go('${k}')">${T[k]}</button>`).join('');
+      ({ dash, new: inp, hist, find, pic: picArea, jad, rule, form: kform, fields: patrolFieldsForm })[t]();
+    }
+
+    function rows(arr) {
+      const v = R5.map(r => mean(arr.map(x => rAvg(x, r)).filter(z => z != null)) || null);
+      return [...v, mean(v.filter(z => z != null))];
+    }
+
+    // ---------- dashboard (default: semua periode)
+    function dash() {
+      const areas = patrolAreas(), depts = patrolDepts();
+      if (!depts.includes(dept)) dept = depts[0] || '';
+      const L = patrolRecords().filter(x => !month || x.date.slice(0, 7) === month),
+            tms = L.flatMap(x => x.tm),
+            cl = tms.filter(t => ['selesai', 'terverifikasi'].includes(t.status)).length;
+
+      const D = depts.map(d => rows(L.filter(x => AR(x.bag).d === d))),
+            cats = [...R5, 'RATA-RATA'],
+            ov = mean(L.map(allAvg));
+
+      const bgs = areas.filter(a => a.d === dept && L.some(x => x.bag === a.id)),
+            bgS = bgs.map(a => ({ name: a.b, color: bcol(a.b), values: rows(L.filter(x => x.bag === a.id)).slice(0, 6) }));
+
+      const per = month ? ML(month) : 'Semua periode';
+
+      v.innerHTML = `
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px">
+          <label style="margin:0;font-weight:600">Periode</label>
+          <select style="width:200px;padding:5px 8px;border-radius:6px;border:1px solid #ccc" onchange="month=this.value;dash()">
+            <option value="">Semua periode</option>
+            ${months().map(m => `<option value="${m}" ${m === month ? 'selected' : ''}>${ML(m)}</option>`).join('')}
+          </select>
+          <span style="margin-left:auto;display:flex;gap:8px"><button class="btn g s" onclick="openExport('excel',patrolRecords())">⬇ Excel</button><button class="btn g s" onclick="openExport('pdf',patrolRecords())">🖨 PDF</button></span>
+        </div>
+        
+        <div class="grid g5" style="margin-bottom:14px">
+          <div class="card kpi"><b>${L.length}</b><span>Patroli dilakukan</span></div>
+          <div class="card kpi"><b>${f1(ov)}</b><span>Nilai rata-rata · ${ov ? kat(ov) : '-'}</span></div>
+          <div class="card kpi"><b>${tms.length}</b><span>Total temuan</span></div>
+          <div class="card kpi"><b>${tms.length ? Math.round(cl / tms.length * 100) : 0}%</b><span>Follow-up selesai (${cl}/${tms.length})</span></div>
+          <div class="card kpi"><b style="color:var(--bad, #d9534f)">${tms.filter(od).length}</b><span>Temuan overdue</span></div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin:0 0 14px 0;font-size:14px;font-weight:700">Nilai 5R & K3 per Departemen — ${per}</h3>
+          <div class="chart-container">
+            ${vbar(R5, depts.map((d, i) => ({ name: d, color: DCOL[d], values: D[i].slice(0, 6) })))}
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+            <h3 style="margin:0;font-size:14px;font-weight:700">Nilai per Bagian — ${per}</h3>
+            <select style="width:220px;padding:5px 8px;border-radius:6px;border:1px solid #ccc" onchange="dept=this.value;dash()">${depts.map(d => `<option ${d === dept ? 'selected' : ''}>${esc(d)}</option>`).join('')}</select>
+          </div>
+          <div class="chart-container">
+            ${bgs.length ? vbar(R5, bgS) : '<div class="empty-chart-placeholder">Belum ada data patroli untuk departemen ini</div>'}
+          </div>
+        </div>
+
+        <div class="grid g2">
+          <div class="card">
+            <h3 style="margin:0 0 12px 0;font-size:14px;font-weight:700">Tabel nilai per Departemen</h3>
+            <div class="tw">
+              <table>
+                <tr>
+                  <th>No</th>
+                  <th>Kriteria</th>
+                  ${depts.map(d => `<th><i class="dot" style="background:${DCOL[d]}"></i>${esc(d)}</th>`).join('')}
+                  <th>AVG</th>
+                </tr>
+                ${cats.map((c, i) => {
+                  const vs = D.map(d => d[i]);
+                  return `<tr style="${i == 6 ? 'font-weight:700' : ''}">
+                    <td>${i < 6 ? i + 1 : ''}</td>
+                    <td>${c}</td>${vs.map(z => `<td>${f1(z)}</td>`).join('')}
+                    <td><b>${f1(mean(vs.filter(z => z != null)))}</b></td>
+                  </tr>`;
+                }).join('')}
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <h3 style="margin:0 0 12px 0;font-size:14px;font-weight:700">Temuan & Follow-up per Departemen</h3>
+            <div class="tw">
+              <table>
+                <tr>
+                  <th>Departemen</th>
+                  <th>Temuan</th>
+                  <th>Selesai</th>
+                  <th>%</th>
+                  <th>Overdue</th>
+                </tr>
+                ${depts.map(d => {
+                  const t = L.filter(x => AR(x.bag).d === d).flatMap(x => x.tm),
+                        c = t.filter(z => ['selesai', 'terverifikasi'].includes(z.status)).length;
+                  return `<tr>
+                    <td><i class="dot" style="background:${DCOL[d]}"></i>${d}</td>
+                    <td>${t.length}</td>
+                    <td>${c}</td>
+                    <td>${t.length ? Math.round(c / t.length * 100) + '%' : '-'}</td>
+                    <td class="${t.some(od) ? 'late' : ''}">${t.filter(od).length}</td>
+                  </tr>`;
+                }).join('')}
+              </table>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // ---------- input patroli: Departemen > Bagian > Form (otomatis)
+    let dr = null;
+    const FN = { umum: 'Umum (Produksi)', putty: 'Putty / Dempul', fiber: 'Fiber', gudang: 'Gudang', office: 'Office' },
+          itm = id => itemsOf(dr.form).find(i => i.id === id);
+
+    const lowFn = v => v <= 3,
+          grpOf = id => itm(id).r,
+          qText = id => itm(id).t;
+
+    function validPatrolDate(value) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || '');
+      if (!m) return false;
+      const date = new Date(+m[1], +m[2] - 1, +m[3]);
+      return date.getFullYear() === +m[1] && date.getMonth() === +m[2] - 1 && date.getDate() === +m[3];
+    }
+
+    function setLoc(d, b) {
+      if (!patrolAreas().some(area => area.id === b && area.d === d)) {
+        alert('Area patroli di luar scope pengguna.');
+        return;
+      }
+      const nf = AR(b).f;
+      if (nf !== dr.form && Object.keys(dr.sc).length && !confirm('Form penilaian untuk bagian ini berbeda. Nilai yang sudah diisi akan direset. Lanjut?')) {
+        inp();
+        return;
+      }
+      if (nf !== dr.form) {
+        dr.sc = {};
+        dr.tm = [];
+      }
+      dr.dept = d;
+      dr.bag = b;
+      dr.form = nf;
+      inp();
+    }
+
+    function inp() {
+      const allowedAreas = patrolAreas();
+      if (!allowedAreas.length) {
+        dr = null;
+        v.innerHTML = '<div class="card">Tidak ada area patroli dalam scope pengguna. Minta admin mengatur scope area terlebih dahulu.</div>';
+        return;
+      }
+      if (!dr) {
+        const a = allowedAreas[0];
+        dr = { date: today(), dept: a.d, bag: a.id, form: a.f, tim: 'A', fields: {}, sc: {}, tm: [] };
+      }
+      if (!allowedAreas.some(area => area.id === dr.bag && area.d === dr.dept)) {
+        const a = allowedAreas[0];
+        dr = { date: today(), dept: a.d, bag: a.id, form: a.f, tim: 'A', fields: {}, sc: {}, tm: [] };
+      }
+      dr.fields = dr.fields || {};
+      const its = itemsOf(dr.form);
+
+      v.innerHTML = `
+        <div class="card">
+          <div class="grid g4">${getPatrolFormFields().map(patrolFieldHtml).join('')}</div>
+          <p style="margin:14px 0 0">PIC area: <b>${esc(picName(dr.bag) || 'Belum diatur')}</b></p>
+          <p style="margin:6px 0 0">Form penilaian: <span class="chip">${FN[dr.form]}</span> <span style="color:var(--mut);font-size:12.5px">otomatis mengikuti bagian · Inspektur: <b>${esc(me().nama)}</b></span></p>
+          <p style="margin:6px 0 0;font-size:12px;color:var(--mut)">Skala: ${SCL.map((s, i) => `<b>${i + 1}</b>${s}`).join(' · ')} — nilai ≤3 wajib disertai temuan berfoto.</p>
+        </div>
+        <div class="sumbar" id="sum"></div>` +
+        R5.map((r, ri) => `<div class="card"><h3 style="display:flex;justify-content:flex-start"><span>${ri + 1}. ${r}</span><span id="ra_${r}"></span></h3>${its.filter(i => i.r === r).map((i, k) => qrow(i.id, 'abcde'[k] + '.', i.t, '5')).join('')}</div>`).join('') +
+        `<button class="btn" onclick="sv()">Simpan patroli</button>`;
+
+      its.forEach(i => tmq(i.id));
+      sum();
+    }
+
+    function patrolFieldValue(key) {
+      return ['date', 'dept', 'bag', 'tim'].includes(key) ? dr[key] || '' : dr.fields[key] ?? '';
+    }
+
+    function patrolFieldHtml(field) {
+      const value = patrolFieldValue(field.key), required = field.required ? 'required' : '',
+            change = `setPatrolField('${field.key}',this.value)`;
+      let control;
+      if (field.type === 'department') control = `<select ${required} onchange="${change}">${patrolDepts().map(dept => `<option value="${esc(dept)}" ${dept === value ? 'selected' : ''}>${esc(dept)}</option>`).join('')}</select>`;
+      else if (field.type === 'area') control = `<select ${required} onchange="${change}">${patrolAreas().filter(area => area.d === dr.dept).map(area => `<option value="${esc(area.id)}" ${area.id === value ? 'selected' : ''}>${esc(area.b)}</option>`).join('')}</select>`;
+      else if (field.type === 'team') control = `<select ${required} onchange="${change}">${TIMS.map(t => `<option value="${esc(t)}" ${t === value ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>`;
+      else if (field.type === 'select') control = `<select ${required} onchange="${change}"><option value="" disabled ${value ? '' : 'selected'}>Pilih ${esc(field.label)}</option>${(field.options || []).map(o => {
+        const option = typeof o === 'string' ? { value: o, label: o } : o;
+        return `<option value="${esc(option.value)}" ${String(option.value) === String(value) ? 'selected' : ''}>${esc(option.label)}</option>`;
+      }).join('')}</select>`;
+      else {
+        const type = ['date', 'number', 'text'].includes(field.type) ? field.type : 'text';
+        control = `<input type="${type}" value="${esc(value)}" ${required} onchange="${change}">`;
+      }
+      return `<div><label>${esc(field.label)}${field.required ? ' *' : ''}</label>${control}</div>`;
+    }
+
+    function setPatrolField(key, value) {
+      if (key === 'dept') {
+        const area = patrolAreas().find(a => a.d === value);
+        if (area) setLoc(value, area.id);
+      } else if (key === 'bag') setLoc(AR(value).d, value);
+      else if (['date', 'tim'].includes(key)) dr[key] = value;
+      else dr.fields[key] = value;
+    }
+
+    function scores() {
+      const sc = {};
+      let miss = null;
+      itemsOf(dr.form).forEach(i => {
+        const n = dr.sc[i.id];
+        if (n == null) miss = miss || i;
+        else (sc[i.r] = sc[i.r] || []).push(n);
+      });
+      return { sc, miss };
+    }
+
+    function sum() {
+      const { sc } = scores(),
+            a = mean(R5.flatMap(r => sc[r] || []));
+
+      R5.forEach(r => {
+        const e = document.getElementById('ra_' + r),
+              m = mean(sc[r] || []);
+        if (e) e.innerHTML = m != null ? `<span class="chip ${cc(m)}">${m.toFixed(1)}</span>` : '';
+      });
+
+      document.getElementById('sum').innerHTML = `
+        <span>Nilai akhir</span><b>${a != null ? (Math.round(a * 10) / 10).toFixed(1) : '-'}</b>
+        ${a != null ? `<span class="chip">${kat(a)}</span>` : ''}
+        <span style="margin-left:auto;opacity:.8;font-size:12px">${R5.map(r => r + ' ' + f1(mean(sc[r] || []))).join(' · ')}</span>`;
+    }
+
+    function sv() {
+      const formFields = getPatrolFormFields();
+      const missingField = formFields.find(f => f.required && !String(patrolFieldValue(f.key)).trim());
+      if (!canInputPatrol()) return alert('Akses ditolak');
+      if (!patrolAreas().some(area => area.id === dr.bag && area.d === dr.dept)) return alert('Area patroli di luar scope pengguna.');
+      if (missingField) return alert('Kolom wajib diisi: ' + missingField.label);
+      if (!validPatrolDate(dr.date)) return alert('Tanggal patroli tidak valid.');
+      const pic = picName(dr.bag);
+      if (!pic || !pic.trim()) return alert('PIC untuk area ini belum diatur. Minta admin menetapkan PIC terlebih dahulu.');
+      const { sc, miss } = scores();
+      if (miss) return alert('Belum dinilai:\n' + miss.t);
+      const e = chkTm(itemsOf(dr.form).map(i => i.id), id => id);
+      if (e) return alert(e);
+      db.p5.push({
+        id: uid(), date: dr.date, dept: dr.dept, bag: dr.bag, pic, form: dr.form, tim: dr.tim,
+        fields: { ...dr.fields },
+        fieldLabels: Object.fromEntries(formFields.map(field => [field.key, field.label])),
+        by: me().nama, sc, tm: packTm()
+      });
+      if (!save(db)) {
+        db.p5.pop();
+        return;
+      }
+      dr = null;
+      alert('Patroli tersimpan');
+      go('dash');
+    }
+
+    // ---------- riwayat
+    let hf = { from: '', to: '', dept: '', bag: '' };
+
+    function hist() {
+      const L = patrolRecords().filter(x => fmatch(hf, x)).sort((a, b) => b.date.localeCompare(a.date));
+      const formFields = getPatrolFormFields();
+      const coreLabels = Object.fromEntries(formFields.filter(field => corePatrolFields.has(field.key)).map(field => [field.key, field.label]));
+      const configuredExtras = formFields.filter(field => !corePatrolFields.has(field.key));
+      const historyFields = new Map(configuredExtras.map(field => [field.key, field.label]));
+      L.forEach(record => Object.keys(record.fields || {}).forEach(key => {
+        if (!historyFields.has(key)) {
+          const label = record.fieldLabels && record.fieldLabels[key];
+          historyFields.set(key, label || key);
+        }
+      }));
+      const extraFields = [...historyFields.entries()].map(([key, label]) => ({ key, label }));
+      v.innerHTML = fbar(hf, 'hf', 'hist()', { dates: true, areas: patrolAreas() }) + `
+        <div class="card tw">
+          <div style="color:var(--mut);margin-bottom:8px">${L.length} patroli</div>
+          <table>
+            <tr>
+              <th>${esc(coreLabels.date)}</th><th>${esc(coreLabels.dept)}</th><th>${esc(coreLabels.bag)}</th><th>PIC Area</th><th>Form</th><th>${esc(coreLabels.tim)}</th>
+              ${extraFields.map(f => `<th>${esc(f.label)}</th>`).join('')}
+              ${R5.map(r => `<th>${r}</th>`).join('')}
+              <th>Nilai</th><th>Temuan</th><th></th>
+            </tr>
+            ${L.map(x => {
+              const a = allAvg(x), g = AR(x.bag);
+              return `<tr>
+                <td>${x.date}</td><td>${g.d}</td><td>${g.b}</td><td>${esc(x.pic || picName(x.bag) || '-')}</td><td>${FN[x.form]}</td><td>${esc(x.tim || '-')}</td>${extraFields.map(f => `<td>${esc(x.fields && x.fields[f.key] != null ? x.fields[f.key] : '-')}</td>`).join('')}${R5.map(r => `<td>${f1(rAvg(x, r))}</td>`).join('')}
+                <td><span class="chip ${cc(a)}">${f1(a)} ·${kat(a)}</span></td>
+                <td>${x.tm.length}</td>
+                <td>${canManagePatrol() ? `<button class="btn r s" onclick="del('${x.id}')">Hapus</button>` : ''}</td>
+              </tr>`;
+            }).join('') || `<tr><td colspan="${15 + extraFields.length}">Tidak ada data</td></tr>`}
+          </table>
+        </div>`;
+    }
+
+    function picArea() {
+      if (!isAdmin()) return go('dash');
+      const pics = db.areaPics || {}, picUsers = db.users.filter(user => normalizeRoles(user).includes('pic_area'));
+      v.innerHTML = `<div class="card">
+        <h3>Petugas penanggung jawab area</h3>
+        <p style="color:var(--mut)">Data area dan penugasan PIC dikelola dari halaman Manajemen User.</p>
+        <div class="tw"><table><tr><th>Departemen</th><th>Area</th><th>PIC</th></tr>
+          ${getAreas(db).map(a => { const user = picUsers.find(account => account.nik === pics[a.id]); return `<tr><td>${esc(a.d)}</td><td>${esc(a.b)}</td><td>${user ? esc(user.nama) : '<span class="late">Belum diatur</span>'}</td></tr>` }).join('')}
+        </table></div>
+        <a class="btn" style="display:inline-block;margin-top:14px;text-decoration:none" href="users.html?tab=areas">Kelola area & PIC</a>
+      </div>`;
+    }
+
+    function del(id) {
+      if (!canManagePatrol()) return alert('Akses ditolak');
+      if (confirm('Hapus patroli ini beserta temuannya?')) {
+        db.p5 = db.p5.filter(x => x.id !== id);
+        save(db);
+        hist();
+      }
+    }
+
+    // ---------- kolom input patroli (khusus admin)
+    let patrolFieldsDraft = null;
+    function patrolFieldsForm() {
+      if (!isAdmin()) return go('dash');
+      if (!patrolFieldsDraft) patrolFieldsDraft = clone(getPatrolFormFields());
+      const core = patrolFieldsDraft.filter(field => corePatrolFields.has(field.key));
+      const extra = patrolFieldsDraft.filter(field => !corePatrolFields.has(field.key));
+      const typeOptions = [['text', 'Teks'], ['date', 'Tanggal'], ['number', 'Angka'], ['select', 'Pilihan']];
+      v.innerHTML = `<div class="card">
+          <h3>Kolom Input Patroli</h3>
+          <p style="color:var(--mut);margin:0">Atur informasi yang dicatat saat patroli. Perubahan berlaku untuk patroli baru; riwayat patroli lama tetap tersimpan.</p>
+          <p style="color:var(--mut);margin:6px 0 0">Checklist dan pertanyaan penilaian diatur terpisah pada tab <b>Kelola Form</b>.</p>
+        </div>
+        <div class="card"><h3>Kolom inti</h3>
+          <p style="color:var(--mut);margin:0 0 12px">Departemen, Bagian, Tanggal, dan Tim selalu tersedia serta wajib diisi. Labelnya dapat disesuaikan.</p>
+          ${core.map(field => `<div class="grid g3" style="align-items:end">
+            <div><label>Kolom</label><input value="${esc(PATROL_FORM_FIELDS.find(item => item.key === field.key).label)}" disabled></div>
+            <div><label>Label pada form</label><input data-field-key="${esc(field.key)}" value="${esc(field.label)}" oninput="updatePatrolField(this.dataset.fieldKey,'label',this.value)"></div>
+            <div><label>Ketentuan</label><input value="Wajib diisi" disabled></div>
+          </div>`).join('')}
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <h3 style="margin:0">Kolom tambahan</h3>
+            <button class="btn g s" onclick="addPatrolField()">+ Tambah kolom</button>
+          </div>
+          <p style="color:var(--mut);margin:8px 0 12px">Kolom tambahan disimpan bersama catatan patroli dan dapat digunakan untuk teks, tanggal, angka, atau daftar pilihan.</p>
+          ${extra.map((field, index) => `<div class="card" style="margin:10px 0;padding:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px">
+              <b>Kolom tambahan ${index + 1}</b>
+              <div><button class="btn g s" onclick="movePatrolField('${esc(field.key)}',-1)" ${index === 0 ? 'disabled' : ''} aria-label="Naikkan kolom">↑</button>
+              <button class="btn g s" onclick="movePatrolField('${esc(field.key)}',1)" ${index === extra.length - 1 ? 'disabled' : ''} aria-label="Turunkan kolom">↓</button>
+              <button class="btn r s" onclick="removePatrolField('${esc(field.key)}')">Hapus</button></div>
+            </div>
+            <div class="grid g3" style="align-items:end">
+              <div><label>Nama kolom</label><input data-field-key="${esc(field.key)}" value="${esc(field.label)}" placeholder="Mis. Cuaca" oninput="updatePatrolField(this.dataset.fieldKey,'label',this.value)"></div>
+              <div><label>Tipe input</label><select data-field-key="${esc(field.key)}" onchange="setPatrolFieldType(this.dataset.fieldKey,this.value)">${typeOptions.map(([value, label]) => `<option value="${value}" ${field.type === value ? 'selected' : ''}>${label}</option>`).join('')}</select></div>
+              <label style="display:flex;align-items:center;gap:8px;margin:0;padding:8px 0"><input type="checkbox" data-field-key="${esc(field.key)}" ${field.required ? 'checked' : ''} onchange="updatePatrolField(this.dataset.fieldKey,'required',this.checked)"> Wajib diisi</label>
+              ${field.type === 'select' ? `<div class="g3"><label>Daftar pilihan (satu pilihan per baris)</label><textarea data-field-key="${esc(field.key)}" rows="3" placeholder="Baik&#10;Perlu tindak lanjut" oninput="updatePatrolFieldOptions(this.dataset.fieldKey,this.value)">${esc((field.options || []).join('\n'))}</textarea></div>` : ''}
+            </div>
+          </div>`).join('') || '<p style="color:var(--mut)">Belum ada kolom tambahan.</p>'}
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" onclick="savePatrolFields()">Simpan kolom</button>
+          <button class="btn g" onclick="patrolFieldsDraft=null;patrolFieldsForm()">Batalkan perubahan</button>
+          <button class="btn g" onclick="resetPatrolFields()">Kembalikan ke standar</button>
+        </div>`;
+    }
+
+    function updatePatrolField(key, property, value) {
+      const field = patrolFieldsDraft && patrolFieldsDraft.find(item => item.key === key);
+      if (!field || corePatrolFields.has(key) && property !== 'label') return;
+      field[property] = value;
+    }
+
+    function updatePatrolFieldOptions(key, value) {
+      const field = patrolFieldsDraft && patrolFieldsDraft.find(item => item.key === key && !corePatrolFields.has(item.key));
+      if (field) field.options = value.split(/\r?\n/).map(option => option.trim()).filter(Boolean);
+    }
+
+    function setPatrolFieldType(key, type) {
+      const field = patrolFieldsDraft && patrolFieldsDraft.find(item => item.key === key && !corePatrolFields.has(item.key));
+      if (!field || !['text', 'date', 'number', 'select'].includes(type)) return;
+      field.type = type;
+      if (type === 'select' && !Array.isArray(field.options)) field.options = [];
+      patrolFieldsForm();
+    }
+
+    function addPatrolField() {
+      patrolFieldsDraft.push({ key: 'custom_' + uid(), label: '', type: 'text', required: false });
+      patrolFieldsForm();
+    }
+
+    function removePatrolField(key) {
+      if (!confirm('Hapus kolom tambahan ini dari form patroli baru? Nilai pada riwayat patroli lama tetap tersimpan.')) return;
+      patrolFieldsDraft = patrolFieldsDraft.filter(field => field.key !== key);
+      patrolFieldsForm();
+    }
+
+    function movePatrolField(key, direction) {
+      const indexes = patrolFieldsDraft.map((field, index) => !corePatrolFields.has(field.key) ? index : -1).filter(index => index >= 0);
+      const from = patrolFieldsDraft.findIndex(field => field.key === key);
+      const position = indexes.indexOf(from), target = indexes[position + direction];
+      if (position < 0 || target == null) return;
+      [patrolFieldsDraft[from], patrolFieldsDraft[target]] = [patrolFieldsDraft[target], patrolFieldsDraft[from]];
+      patrolFieldsForm();
+    }
+
+    function savePatrolFields() {
+      if (!isAdmin()) return alert('Akses ditolak');
+      const core = PATROL_FORM_FIELDS.map(base => {
+        const field = patrolFieldsDraft.find(item => item.key === base.key);
+        return { ...base, label: String(field && field.label || '').trim() };
+      });
+      const extra = patrolFieldsDraft.filter(field => !corePatrolFields.has(field.key)).map(field => ({
+        key: field.key, label: String(field.label || '').trim(), type: field.type,
+        required: !!field.required, ...(field.type === 'select' ? { options: field.options || [] } : {})
+      }));
+      const fields = [...core, ...extra];
+      if (fields.some(field => !field.label)) return alert('Semua kolom harus memiliki nama.');
+      const labels = fields.map(field => field.label.toLowerCase());
+      if (new Set(labels).size !== labels.length) return alert('Nama kolom tidak boleh sama.');
+      if (extra.some(field => !/^custom_[A-Za-z0-9]+$/.test(field.key) || !['text', 'date', 'number', 'select'].includes(field.type))) return alert('Konfigurasi kolom tambahan tidak valid.');
+      if (extra.some(field => field.type === 'select' && !field.options.length)) return alert('Kolom tipe Pilihan harus memiliki setidaknya satu pilihan.');
+      const previousFields = Array.isArray(db.patrolFields) ? clone(db.patrolFields) : null;
+      db.patrolFields = fields;
+      if (!save(db)) {
+        if (previousFields) db.patrolFields = previousFields;
+        else delete db.patrolFields;
+        return;
+      }
+      dr = null;
+      patrolFieldsDraft = null;
+      alert('Kolom input tersimpan dan berlaku untuk patroli berikutnya.');
+      patrolFieldsForm();
+    }
+
+    function resetPatrolFields() {
+      if (!isAdmin()) return alert('Akses ditolak');
+      if (!confirm('Kembalikan kolom input ke standar? Kolom tambahan tidak akan muncul pada patroli baru; riwayat lama tetap tersimpan.')) return;
+      const previousFields = Array.isArray(db.patrolFields) ? clone(db.patrolFields) : null;
+      delete db.patrolFields;
+      if (!save(db)) {
+        if (previousFields) db.patrolFields = previousFields;
+        return;
+      }
+      dr = null;
+      patrolFieldsDraft = null;
+      alert('Kolom input dikembalikan ke standar.');
+      patrolFieldsForm();
+    }
+
+    // ---------- temuan
+    function find() {
+      temuanTab({ el: v, get: () => patrolRecords().flatMap(x => x.tm.map(t => ({ x, t }))), grp: '5R', data: db, areas: patrolAreas(), save: () => save(db), redo: find });
+    }
+
+    // ---------- jadwal patroli tahunan (admin dapat mengubah tahun & personil)
+    let jy = '', jedit = false;
+
+    function jad() {
+      db.jadwal = db.jadwal || {};
+      const ys = Object.keys(db.jadwal).sort();
+      if (!db.jadwal[jy]) jy = ys[ys.length - 1] || String(new Date().getFullYear());
+      const rows = db.jadwal[jy] || [],
+            adm = isAdmin();
+
+      v.innerHTML = `
+        <div class="card">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+            <label style="margin:0">Tahun</label>
+            <select style="width:120px" onchange="jy=this.value;jedit=false;jad()">${ys.map(y => `<option ${y === jy ? 'selected' : ''}>${y}</option>`).join('')}</select>
+            ${adm ? `<span style="margin-left:auto;display:flex;gap:8px">${jedit ? `<button class="btn g s" onclick="jaddRow()">+ Baris</button><button class="btn g" onclick="db=load();jedit=false;jad()">Batal</button><button class="btn" onclick="save(db);jedit=false;jad()">Simpan</button>` : `<button class="btn g s" onclick="jnew()">+ Tahun baru</button><button class="btn" onclick="jedit=true;jad()">✎ Edit jadwal</button>`}</span>` : ''}
+          </div>
+          <h3 style="text-align:center;margin:6px 0 16px;letter-spacing:.4px">JADWAL PELAKSANAAN PATROLI 5RK3 TAHUN ${jy}</h3>
+          <div class="tw">
+            <table class="jt">
+              <tr>
+                <th style="width:50px">NO</th>
+                ${TIMS.map(t => `<th>TEAM ${t}</th>`).join('')}
+                ${jedit ? '<th></th>' : ''}
+              </tr>
+              ${rows.map((r, i) => `<tr>
+                <td>${i + 1}</td>${TIMS.map(t => `<td>${jedit ? `<input value="${esc(r[t].n)}" placeholder="Nama" oninput="db.jadwal[jy][${i}].${t}.n=this.value"><input value="${esc(r[t].j)}" placeholder="Jabatan" oninput="db.jadwal[jy][${i}].${t}.j=this.value">` : `<b>${esc(r[t].n)}</b>${esc(r[t].j)}`}</td>`).join('')}
+                ${jedit ? `<td><button class="btn r s" onclick="jdel(${i})">×</button></td>` : ''}
+              </tr>`).join('')}
+            </table>
+          </div>
+        </div>`;
+    }
+
+    function jaddRow() {
+      db.jadwal[jy].push(Object.fromEntries(TIMS.map(t => [t, { n: '', j: 'SPV. ' }])));
+      jad();
+    }
+
+    function jdel(i) {
+      db.jadwal[jy].splice(i, 1);
+      jad();
+    }
+
+    function jnew() {
+      const y = prompt('Tahun baru (jadwal disalin dari tahun ' + jy + ', lalu bisa diubah):', String(+jy + 1));
+      if (!y) return;
+      if (!/^\d{4}$/.test(y)) return alert('Format tahun tidak valid');
+      if (db.jadwal[y]) return alert('Jadwal tahun ' + y + ' sudah ada');
+      db.jadwal[y] = JSON.parse(JSON.stringify(db.jadwal[jy]));
+      save(db);
+      jy = y;
+      jedit = true;
+      jad();
+    }
+
+    // ---------- kelola isi form penilaian (khusus admin)
+    let ek = 'umum', eg = null;
+    const clone = o => JSON.parse(JSON.stringify(o));
+    const dirty = () => eg && JSON.stringify(eg) !== JSON.stringify(TPL[ek].g);
+    function kform() {
+      if (!isAdmin()) return go('dash');
+      if (!eg) eg = clone(TPL[ek].g);
+      v.innerHTML = `<div class="card"><label style="margin-top:0">Pilih form penilaian yang diedit</label>
+        <div class="seg">${Object.keys(TPL).map(k => `<button class="${k === ek ? 'on' : ''}" onclick="kpick('${k}')">${FN[k]}<small>${getAreas(db).filter(a => a.f === k).length} bagian</small></button>`).join('')}</div>
+        <p style="margin:10px 0 0;color:var(--mut);font-size:12.5px">Dipakai oleh: ${getAreas(db).filter(a => a.f === ek).map(a => a.d + ' › ' + a.b).join(', ')}</p>
+        <p style="margin:6px 0 0;color:var(--mut);font-size:12.5px">Ubah, tambah, hapus, atau urutkan pernyataan di tiap kategori. Perubahan berlaku untuk patroli berikutnya; riwayat lama tidak berubah. Enam kategori (Ringkas–K3) tetap, minimal 1 pertanyaan per kategori.</p></div>`
+        + R5.map((r, ri) => `<div class="card"><h3>${ri + 1}. ${r}</h3>${eg[r].map((t, i) => `<div class="row"><span class="tg">${'abcdefghijklmnop'[i] || i + 1}.</span><input value="${esc(t)}" oninput="eg['${r}'][${i}]=this.value"><button class="btn g s" onclick="kmv('${r}',${i},-1)">↑</button><button class="btn g s" onclick="kmv('${r}',${i},1)">↓</button><button class="btn r s" onclick="kdel('${r}',${i})">×</button></div>`).join('')}<button class="btn g s" onclick="eg['${r}'].push('');kform()">+ Pertanyaan</button></div>`).join('')
+        + `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="ksave()">Simpan perubahan</button><button class="btn g" onclick="eg=null;kform()">Batalkan perubahan</button><button class="btn g" onclick="kreset()">Kembalikan ke standar</button></div>`;
+    }
+    function kpick(k) { if (dirty() && !confirm('Perubahan belum disimpan akan hilang. Lanjut?')) return; ek = k; eg = null; kform(); }
+    function kmv(r, i, d) { const a = eg[r], j = i + d; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; kform(); }
+    function kdel(r, i) { if (eg[r].length <= 1) return alert('Minimal 1 pertanyaan per kategori'); eg[r].splice(i, 1); kform(); }
+    function ksave() {
+      const g = {};
+      for (const r of R5) { g[r] = eg[r].map(t => t.trim()).filter(Boolean); if (!g[r].length) return alert('Kategori ' + r + ' harus punya minimal 1 pertanyaan'); }
+      db.tpl = db.tpl || {}; db.tpl[ek] = g; TPL[ek].g = clone(g);
+      if (!save(db)) return;
+      dr = null; eg = null; alert('Form ' + FN[ek] + ' tersimpan. Berlaku untuk patroli berikutnya.'); kform();
+    }
+    function kreset() {
+      if (!confirm('Kembalikan form ' + FN[ek] + ' ke pertanyaan standar? Perubahan Anda akan dihapus.')) return;
+      if (db.tpl) delete db.tpl[ek]; TPL[ek].g = clone(TPL0[ek].g); save(db); dr = null; eg = null; kform();
+    }
+
+    // ---------- ketentuan
+    function rule() {
+      const tb = (h, rs) => `<table style="max-width:560px"><tr>${h.map(z => `<th>${z}</th>`).join('')}</tr>${rs.map(r => `<tr>${r.map(z => `<td>${z}</td>`).join('')}</tr>`).join('')}</table>`;
+
+      v.innerHTML = `
+        <div class="card">
+          <h3>A. Ketentuan umum</h3>
+          <ol style="margin:0;padding-left:20px;line-height:1.9">
+            <li>Penilaian berdasarkan 15 poin pemeriksaan pada Form Penilaian 5R K3.</li>
+            <li>Pemeriksaan dilakukan pada area fokus sesuai jadwal pemantauan.</li>
+            <li>RINGKAS menggunakan jumlah temuan sesuai standar yang ditetapkan.</li>
+            <li>RAPI, RESIK, RAWAT, RAJIN, dan K3 dinilai berdasarkan persentase pemenuhan kondisi yang relevan.</li>
+            <li>Nilai akhir = rata-rata 15 poin penilaian, dibulatkan 1 angka di belakang koma.</li>
+          </ol>
+          <p style="color:var(--mut)">Di aplikasi, inspektur langsung memilih nilai 1–5 pada tiap butir dengan berpedoman pada standar di bawah ini.</p>
+        </div>
+        <div class="grid g2">
+          <div class="card">
+            <h3>B1. RINGKAS — jumlah temuan</h3>
+            ${tb(['Nilai', 'Jumlah temuan', 'Kategori'], [[5, '0–2', 'Sangat Baik'], [4, '3–6', 'Baik'], [3, '7–10', 'Cukup'], [2, '11–15', 'Kurang'], [1, '>15', 'Sangat Kurang']])}
+          </div>
+          <div class="card">
+            <h3>B2. RAPI–RESIK–RAWAT–RAJIN–K3 — % pemenuhan</h3>
+            ${tb(['Nilai', 'Persentase', 'Kategori'], [[5, '100%', 'Sangat Baik'], [4, '75% – <100%', 'Baik'], [3, '50% – <75%', 'Cukup'], [2, '30% – <50%', 'Kurang'], [1, '<30%', 'Sangat Kurang']])}
+          </div>
+        </div>
+        <div class="grid g2">
+          <div class="card">
+            <h3>C. Persentase pemenuhan</h3>
+            <p><b>= (Jumlah kondisi yang sesuai ÷ Jumlah kondisi yang seharusnya dipenuhi pada area fokus) × 100%</b></p>
+            <p style="color:var(--mut)">Mengikuti kondisi dan kebutuhan masing-masing area fokus; tidak menetapkan jumlah titik/objek yang sama untuk setiap line atau area.</p>
+          </div>
+          <div class="card">
+            <h3>D. Nilai akhir = Σ nilai ÷ jumlah pertanyaan</h3>
+            ${tb(['Nilai akhir', 'Kategori'], [['4,5 – 5,0', 'Sangat Baik'], ['3,5 – 4,4', 'Baik'], ['2,5 – 3,4', 'Cukup'], ['1,5 – 2,4', 'Kurang'], ['1,0 – 1,4', 'Sangat Kurang']])}
+          </div>
+        </div>`;
+    }
+
+    go(picOnly() ? 'hist' : 'dash');
+  </script>
+</body>
+</html>

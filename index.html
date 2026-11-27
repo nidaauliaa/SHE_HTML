@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>SHE New Armada - Login</title>
+    <link rel="icon" type="image/svg+xml" href="assets/she-logo.svg">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/theme.css">
+    <style>
+        .login-brand { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+        .login-brand img { width: 48px; height: 54px; flex: 0 0 auto; }
+    </style>
+    <script src="js/storage.js"></script>
+    <script src="js/theme.js"></script>
+</head>
+
+<body class="login">
+    <div class="card">
+        <div class="login-brand"><img src="assets/she-logo.svg" alt="Logo SHE"><div>
+            <h2 style="margin:0 0 4px">SHE New Armada</h2>
+            <div style="color:#6b7a90;font-size:13px">Safety, Health & Environment</div>
+        </div></div>
+        <label>Username</label><input id="nik" placeholder="mis. admin.she" autofocus><label>Password</label><input id="pw"
+            type="password">
+        <div class="err" id="err"></div><button class="btn" style="width:100%" onclick="go()">Masuk</button>
+        <p style="font-size:12px;color:#6b7a90;line-height:1.7">Akun demo:<br>
+            Admin <b>100001</b> / <b>admin123</b><br>
+            Petugas SHE <b>200001</b> / <b>user123</b><br>
+            Petugas APAR <b>300001</b> / <b>apar123</b><br>
+            Supervisor PPC <b>400001</b> / <b>ppc123</b><br>
+            PIC Area IT <b>500001</b> / <b>it123</b></p>
+    </div>
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/store.js"></script>
+    <script>if (me()) location.href = 'launcher.html';
+        function go() {
+            const nikInput = document.getElementById('nik'), passwordInput = document.getElementById('pw');
+            const u = load().users.find(x => String(x.username || x.nik).toLowerCase() === nikInput.value.trim().toLowerCase() && x.passwordHash === hashPassword(passwordInput.value));
+            if (!u) { err.textContent = 'Username atau password salah'; return }
+
+            setSession(u); location.href = 'launcher.html'
+        }
+        document.addEventListener('keydown', e => e.key === 'Enter' && go())</script>
+</body>
+
+</html>

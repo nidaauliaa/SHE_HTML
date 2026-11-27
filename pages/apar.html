@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHE New Armada - APAR / FireCheck</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/she-logo.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } }
+  </script>
+  <style>
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, .05)
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, .3);
+      border-radius: 3px
+    }
+
+    /* komponen kecil (CSS biasa, tidak bergantung Tailwind) */
+    .inp {
+      width: 100%;
+      font-size: 12px;
+      padding: 8px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #fff;
+      color: #334155
+    }
+
+    .inp:focus {
+      outline: 2px solid #3b82f6;
+      outline-offset: -1px;
+      border-color: transparent
+    }
+
+    .lbl {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 4px
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 8px;
+      transition: .15s;
+      cursor: pointer;
+      white-space: nowrap;
+      border: 1px solid transparent
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: not-allowed
+    }
+
+    .btn-p {
+      background: #2563eb;
+      color: #fff
+    }
+
+    .btn-p:hover {
+      background: #1d4ed8
+    }
+
+    .btn-g {
+      background: #fff;
+      color: #475569;
+      border-color: #cbd5e1
+    }
+
+    .btn-g:hover {
+      background: #f1f5f9
+    }
+
+    .btn-t {
+      background: #14b8a6;
+      color: #fff
+    }
+
+    .btn-t:hover {
+      background: #0d9488
+    }
+
+    .btn-r {
+      background: #fb7185;
+      color: #fff
+    }
+
+    .btn-r:hover {
+      background: #f43f5e
+    }
+
+    .btn-x {
+      background: #dc2626;
+      color: #fff
+    }
+
+    .btn-x:hover {
+      background: #b91c1c
+    }
+
+    .ab {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      cursor: pointer;
+      transition: .15s
+    }
+
+    .ab.v {
+      background: #e0f2fe;
+      color: #0369a1
+    }
+
+    .ab.q {
+      background: #ede9fe;
+      color: #6d28d9
+    }
+
+    .ab.e {
+      background: #fef3c7;
+      color: #b45309
+    }
+
+    .ab.d {
+      background: #fee2e2;
+      color: #b91c1c
+    }
+
+    .ab:hover {
+      filter: brightness(.93)
+    }
+
+    .bdg {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      white-space: nowrap
+    }
+
+    .bdg.g {
+      background: #d1fae5;
+      color: #047857
+    }
+
+    .bdg.r {
+      background: #fee2e2;
+      color: #b91c1c
+    }
+
+    .bdg.y {
+      background: #fef3c7;
+      color: #b45309
+    }
+
+    .bdg.b {
+      background: #dbeafe;
+      color: #1d4ed8
+    }
+
+    .bdg.s {
+      background: #e2e8f0;
+      color: #475569
+    }
+
+    table.tb {
+      width: 100%;
+      font-size: 12px;
+      text-align: left;
+      border-collapse: collapse
+    }
+
+    table.tb th {
+      padding: 10px 12px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: #64748b;
+      font-weight: 700;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      white-space: nowrap
+    }
+
+    table.tb td {
+      padding: 9px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #475569;
+      vertical-align: middle
+    }
+
+    table.tb td.nw {
+      white-space: nowrap
+    }
+
+    table.tb tbody tr:hover {
+      background: #f8fafc
+    }
+
+    table.yr th,
+    table.yr td {
+      padding: 6px 8px;
+      text-align: center
+    }
+
+    table.yr th:first-child,
+    table.yr td:first-child {
+      text-align: left
+    }
+
+    @keyframes pop {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(.98)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    .pop {
+      animation: pop .18s ease-out
+    }
+
+    body.apar-page {
+      background: radial-gradient(1000px 420px at 85% -80px, #dbe8ff, transparent), #f1f5fb !important;
+      color: #14213d
+    }
+
+    .apar-page .apar-header {
+      background: linear-gradient(100deg, #0b1f4d 0%, #1d4ed8 60%, #3b82f6 100%) !important;
+      box-shadow: 0 6px 22px rgba(13, 40, 110, .25)
+    }
+
+    .apar-page #sidebar {
+      background: #fff !important;
+      color: #475569 !important;
+      border-right: 1px solid #e2e8f0;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, .07)
+    }
+
+    .apar-page #sidebar .border-b {
+      border-color: #e2e8f0 !important
+    }
+
+    .apar-page #sidebar h1 {
+      color: #0f1f46 !important
+    }
+
+    .apar-page #sidebar .text-slate-300,
+    .apar-page #sidebar .text-slate-400,
+    .apar-page #sidebar .text-slate-200 {
+      color: #64748b !important
+    }
+
+    .apar-page #sidebar .bg-blue-900 {
+      color: #fff !important
+    }
+
+    .apar-page #sidebar>a {
+      background: #eff6ff !important;
+      color: #1e3a8a !important
+    }
+
+    .apar-page #nav p {
+      color: #94a3b8 !important
+    }
+
+    .apar-page #nav a,
+    .apar-page #nav button {
+      color: #475569
+    }
+
+    .apar-page #nav a:hover,
+    .apar-page #nav button:hover {
+      background: #eff6ff !important;
+      color: #1e3a8a !important
+    }
+
+    .apar-page #nav>a[class*="bg-blue-600"] {
+      background: linear-gradient(135deg, #2563eb, #3b82f6) !important;
+      color: #fff !important;
+      border-left-color: #60a5fa !important
+    }
+
+    .apar-page #nav>a[class*="bg-blue-600"] i {
+      color: #dbeafe !important
+    }
+
+    .apar-page #nav button i {
+      color: #64748b !important
+    }
+
+    .apar-page #nav div div[class*="bg-slate-900"] {
+      background: #f8fafc !important
+    }
+
+    .apar-page #nav div div a[class*="bg-blue-600"] {
+      background: #dbeafe !important;
+      color: #1d4ed8 !important
+    }
+
+    .apar-page main {
+      color: #14213d
+    }
+
+    .apar-page footer {
+      border-color: #e2e8f0 !important
+    }
+
+    .apar-page .apar-card {
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 16px !important;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 8px 24px rgba(15, 23, 42, .07) !important
+    }
+
+    .apar-page .apar-card h3 {
+      color: #0f1f46
+    }
+
+    .apar-page table.tb th {
+      background: #f1f5fd;
+      color: #334155;
+      border-bottom-color: #e2e8f0
+    }
+
+    .apar-page table.tb td {
+      border-bottom-color: #edf1f7;
+      color: #475569
+    }
+
+    .apar-page table.tb tbody tr:hover {
+      background: #f8fbff
+    }
+
+    .apar-page .inp {
+      border-color: #e2e8f0;
+      border-radius: 11px;
+      color: #14213d
+    }
+
+    .apar-page .inp:focus {
+      outline: 0;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, .14);
+      border-color: #2563eb
+    }
+
+    .apar-page .btn {
+      border-radius: 11px
+    }
+
+    .apar-page .btn-p {
+      background: linear-gradient(135deg, #2563eb, #3b82f6);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, .28)
+    }
+
+    .apar-page .btn-g {
+      background: #fff;
+      color: #1e3a8a;
+      border-color: #dbe7ff
+    }
+
+    .apar-page .btn-t {
+      background: #0d9488
+    }
+
+    .apar-page .apar-modal-head {
+      background: linear-gradient(100deg, #0b1f4d, #1d4ed8) !important
+    }
+
+    #aparMap {
+      height: min(68vh, 680px);
+      min-height: 360px;
+      border-radius: 10px;
+      z-index: 0
+    }
+
+    .map-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 11px;
+      color: #64748b
+    }
+
+    .map-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px
+    }
+
+    .map-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%
+    }
+  </style>
+  <link rel="stylesheet" href="../css/apar-dark.css">
+  <script src="../js/storage.js"></script>
+  <script src="../js/theme.js"></script>
+</head>
+
+<body class="apar-page bg-slate-100 font-sans text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- ============ HEADER ============ -->
+  <header
+    class="apar-header bg-[#1a233a] text-white h-14 flex items-center justify-between px-3 md:px-4 fixed top-0 left-0 right-0 z-30 shadow-md">
+    <div class="flex items-center gap-2 md:gap-3 min-w-0">
+      <button id="btnSide" class="md:hidden text-slate-300 hover:text-white p-1.5" aria-label="Menu"><i
+          class="fa-solid fa-bars text-lg"></i></button>
+      <a href="../launcher.html"
+        class="hidden sm:flex items-center gap-1.5 text-xs bg-white/10 hover:bg-white/20 px-2.5 py-1.5 rounded-md transition"
+        title="Kembali ke daftar modul">
+        <i class="fa-solid fa-table-cells-large"></i><span>Apps</span>
+      </a>
+      <img src="../assets/she-logo.svg" alt="Logo SHE" class="w-6 h-7 object-contain">
+      <span class="font-bold tracking-wide text-sm md:text-base truncate"><i
+          class="fa-solid fa-fire-extinguisher mr-1.5" aria-hidden="true"></i>APAR / FireCheck</span>
+    </div>
+    <div class="flex items-center gap-2 md:gap-4 text-xs">
+      <div class="flex items-center gap-2"><i class="fa-solid fa-circle-user text-slate-300 text-base"></i><span
+          id="uName" class="hidden sm:inline text-slate-200"></span></div>
+      <button onclick="logout()"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md transition text-xs font-medium flex items-center gap-1.5 shadow">
+        <i class="fa-solid fa-right-from-bracket"></i><span class="hidden sm:inline">Keluar</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="flex pt-14 flex-1">
+    <!-- ============ SIDEBAR ============ -->
+    <aside id="sidebar"
+      class="w-64 bg-[#1e273e] text-slate-300 flex-shrink-0 fixed top-14 bottom-0 left-0 z-20 overflow-y-auto transition-transform duration-300 -translate-x-full md:translate-x-0 shadow-lg">
+      <div class="p-4 border-b border-slate-700/60 flex items-center gap-3">
+        <img src="../assets/she-logo.svg" alt="Logo SHE" class="w-10 h-10 object-contain">
+        <div>
+          <h1 class="font-bold text-white tracking-wide text-lg leading-none">APAR</h1>
+          <p class="text-[10px] text-slate-400 mt-1">Modul FireCheck</p>
+        </div>
+      </div>
+      <a href="../launcher.html"
+        class="mx-3 mt-3 flex items-center gap-2 text-xs px-3 py-2 rounded-md bg-slate-700/40 hover:bg-slate-700/70 text-slate-200 transition">
+        <i class="fa-solid fa-arrow-left"></i><span>Kembali ke Modul</span>
+      </a>
+      <nav id="nav" class="p-3 text-xs space-y-1"></nav>
+    </aside>
+    <div id="overlay" class="fixed inset-0 bg-black/50 z-10 hidden md:hidden"></div>
+
+    <!-- ============ KONTEN ============ -->
+    <main class="flex-1 min-w-0 md:ml-64 p-3 md:p-6 flex flex-col justify-between">
+      <div id="view" class="space-y-4"></div>
+      <footer class="mt-8 text-center text-xs text-slate-400 py-2 border-t border-slate-200">&copy; 2026 Safety, Health
+        &amp; Environment (SHE) — PT New Armada</footer>
+    </main>
+  </div>
+
+  <div id="modal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-3 backdrop-blur-sm"></div>
+  <div id="toast" class="fixed bottom-4 right-4 z-[60] space-y-2"></div>
+
+  <script src="../js/data.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/permissions.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/xlsx-lite.js"></script>
+  <script>
+      /* =====================================================================
+         Modul APAR — semua kode dibungkus satu fungsi supaya tidak bentrok dengan
+         js/data.js & js/store.js. Fungsi untuk tombol (onclick) ada di objek window.APR.
+         Data disimpan di localStorage key "she_apar_v1" (terpisah dari data Patrol 5R).
+         ===================================================================== */
+      (function () {
+        'use strict';
+        if (typeof guard === 'function' && !guard()) return;
+        if (typeof guardModule === 'function' && !guardModule('apar')) return;
+        const USER = (typeof me === 'function' && me()) || { nama: 'Admin SHE' };
+        const AUTH_DB = load();
+        const canManageApar = () => canManageModule(USER, 'apar', AUTH_DB);
+        const visibleApars = () => db.apars.filter(item => canViewData(USER, item, 'apar', AUTH_DB));
+        document.getElementById('uName').textContent = USER.nama;
+
+        /* ---------- util ---------- */
+        const $ = s => document.querySelector(s);
+        const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+        const uid = () => 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        const pad = n => String(n).padStart(2, '0');
+        const iso = (y, m0, d) => `${y}-${pad(m0 + 1)}-${pad(d)}`;
+        const NOW = new Date(), TODAY = iso(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
+        const BLN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        const BLN3 = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const fmtD = d => { if (!d) return '-'; const [y, m, t] = d.split('-').map(Number); return `${t} ${BLN3[m - 1]} ${y}`; };
+        const fmtL = d => { const [y, m, t] = d.split('-').map(Number); return `${t} ${BLN[m - 1]} ${y}`; };
+        const rp = n => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
+        const sum = a => a.reduce((x, y) => x + y, 0);
+        const toast = (m, t) => { const e = document.createElement('div'); e.className = `pop text-xs font-medium text-white px-4 py-2.5 rounded-lg shadow-lg ${t === 'err' ? 'bg-rose-500' : 'bg-emerald-600'}`; e.textContent = m; $('#toast').appendChild(e); setTimeout(() => e.remove(), 2600); };
+
+        /* ---------- data (localStorage) ---------- */
+        const KEY = 'she_apar_v1';
+        let db;
+        function dbLoad() {
+          try { db = SHEStorage.getJSON(KEY); } catch (e) { db = null; }
+          if (!db || db.v !== 1) { db = seed(); dbSave(); }
+          let changed = false;
+          if (!Array.isArray(db.perpindahan)) { db.perpindahan = []; changed = true; }
+          db.apars.forEach(item => {
+            if (typeof item.bagianPemilik !== 'string') { item.bagianPemilik = ''; changed = true; }
+          });
+          if (changed) dbSave();
+        }
+        function dbSave() { try { SHEStorage.setJSON(KEY, db); return true; } catch (e) { toast('Penyimpanan browser penuh', 'err'); return false; } }
+
+        function seed() {
+          let s = 20260321; const rnd = () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+          const pick = a => a[Math.floor(rnd() * a.length)];
+          const AREAS = [['POS 1 NA', 2, 0], ['Ruang IT', 2, 0], ['POS 7 SECURITY', 2, 0], ['POS APM', 3, 3], ['POS 3 SOKA', 1, 0], ['POS 1 SOKA', 1, 0], ['OFFICE HCGA', 2, 1], ['MARKETING', 2, 0], ['PDC', 4, 2], ['DAPUR TEMPAT MEMASAK', 3, 1], ['RUANG KOMPRESOR', 2, 0], ['MINIBUS BODY', 6, 4], ['GUDANG BODY PART', 5, 2], ['PAINTING BUS', 7, 5], ['INTERIOR', 4, 3], ['KOMPONEN', 6, 4], ['SMALL PRESS', 3, 1], ['WELDING', 5, 2], ['DOJO STAMPING', 2, 0]];
+          const LOK = ['Dekat pintu masuk', 'Sisi kiri ruangan', 'Sisi kanan ruangan', 'Dekat panel listrik', 'Tengah area', 'Dekat tangga', 'Belakang area', 'Samping pintu keluar'];
+          const PETUGAS = ['Budi Santoso', 'Siti Aminah', 'Agus Prasetyo', 'Rina Wulandari'];
+          const KET = { i1: ['Tekanan kurang', 'Tabung berkarat', 'Tabung penyok'], i2: ['Pin longgar', 'Pin hilang'], i3: ['Segel putus', 'Segel tidak ada'], i4: ['Selang retak', 'Selang getas'], i5: ['Nozzle tersumbat', 'Nozzle retak'] };
+          const d = { v: 1, areas: [], items: [], apars: [], insp: [], perpindahan: [], pakai: [], vendors: [], needs: [], fin: [] };
+          ['Tabung', 'Pin', 'Segel Pin', 'Selang', 'Nozzle'].forEach((n, i) => d.items.push({ id: 'i' + (i + 1), nama: n, active: true }));
+          const cy = NOW.getFullYear(), cm = NOW.getMonth(), cd = NOW.getDate();
+          let kn = 0;
+          AREAS.forEach(([nama, tot, sud], ai) => {
+            const aid = 'a' + (ai + 1); d.areas.push({ id: aid, nama });
+            for (let k = 0; k < tot; k++) {
+              kn++;
+              const big = kn % 23 === 0, isi = big ? 'Powder' : pick(['Powder', 'Powder', 'CO2', 'Foam']);
+              const off = rnd() < .08 ? -1 - Math.floor(rnd() * 6) : 2 + Math.floor(rnd() * 22), ed = new Date(cy, cm + off, 1 + Math.floor(rnd() * 27));
+              const ap = {
+                id: 'p' + kn, kode: pad(kn).padStart(3, '0'), areaId: aid, bagianPemilik: '', lokasi: pick(LOK), isi, ukuran: big ? 50 : isi === 'CO2' ? pick([5, 7]) : pick([3, 6, 9]), satuan: 'KG',
+                exp: iso(ed.getFullYear(), ed.getMonth(), ed.getDate()), jenis: big ? 'APAB' : 'APAR', catatan: '', active: true
+              };
+              d.apars.push(ap);
+              // inspeksi: bulan ini (sebanyak "sudah") + 3 bulan sebelumnya
+              for (let mo = 0; mo >= -3; mo--) {
+                if (mo === 0 ? k >= sud : rnd() > .9) continue;
+                const dt = new Date(cy, cm + mo, 1), day = mo === 0 ? 1 + Math.floor(rnd() * cd) : 1 + Math.floor(rnd() * 27);
+                const items = d.items.map(it => {
+                  const r = rnd(); const nilai = r < .022 ? 'rusak' : r < .03 ? 'tidak ada' : 'baik';
+                  return { item: it.id, nama: it.nama, nilai, ket: nilai === 'rusak' ? pick(KET[it.id]) : nilai === 'tidak ada' ? 'Komponen tidak ditemukan' : '', foto: '', perbaikan: nilai === 'rusak' ? pick(['sesuai', 'tidak sesuai']) : '' };
+                });
+                d.insp.push({ id: 'n' + d.insp.length, aparId: ap.id, date: iso(dt.getFullYear(), dt.getMonth(), day), petugas: pick(PETUGAS), pakai: rnd() < .03 ? 'sudah' : 'belum', foto: '', items });
+              }
+            }
+          });
+          d.vendors = [{ id: 'v1', nama: 'CV Sinar Safety', kontak: '0812-3456-7890' }, { id: 'v2', nama: 'PT Prima Fire Protection', kontak: '021-5550-1234' }, { id: 'v3', nama: 'UD Sumber Api Jaya', kontak: '0813-9876-5432' }];
+          d.needs = ['Refill Powder', 'Ganti Selang', 'Ganti Segel Pin', 'Beli APAR Baru', 'Ganti Nozzle'].map((n, i) => ({ id: 'k' + (i + 1), nama: n }));
+          for (let i = 0; i < 8; i++) d.fin.push({ id: 'f' + i, aparId: pick(d.apars).id, vendorId: pick(d.vendors).id, needId: pick(d.needs).id, tgl: iso(cy, Math.floor(rnd() * (cm + 1)), 1 + Math.floor(rnd() * 27)), biaya: pick([85000, 150000, 275000, 450000, 1250000]) });
+          ['Kebakaran kecil di area welding', 'Pelatihan K3 / simulasi', 'Percikan api panel listrik', 'Kebocoran gas ringan', 'Simulasi evakuasi'].forEach((al, i) => {
+            const ap = pick(d.apars), dt = new Date(cy, cm - Math.floor(rnd() * 5), 1 + Math.floor(rnd() * 27));
+            d.pakai.push({ id: 'u' + i, aparId: ap.id, petugas: pick(PETUGAS), tgl: iso(dt.getFullYear(), dt.getMonth(), dt.getDate()), alasan: al, status: i % 2 ? 'Sudah Refill' : 'Belum Refill' });
+          });
+          return d;
+        }
+
+        /* ---------- lookup ---------- */
+        const byId = (arr, id) => arr.find(x => x.id === id);
+        const areaNm = id => (byId(db.areas, id) || {}).nama || '-';
+        const apar = id => { const item = byId(db.apars, id); return item && canViewData(USER, item, 'apar', AUTH_DB) ? item : null; };
+        const lokasi = a => a ? areaNm(a.areaId) + (a.lokasi ? ' - ' + a.lokasi : '') : '-';
+        const inspAreaId = i => i.areaId || (byId(db.apars, i.aparId) || {}).areaId;
+        const visibleInspections = () => db.insp.filter(item => canViewData(USER, { areaId: inspAreaId(item) }, 'apar', AUTH_DB));
+        const inspLokasi = i => {
+          const a = byId(db.apars, i.aparId);
+          return lokasi({ areaId: inspAreaId(i), lokasi: i.lokasi || (a || {}).lokasi });
+        };
+        const inspExpiry = i => i.exp || (byId(db.apars, i.aparId) || {}).exp;
+        const inspOwner = i => i.bagianPemilik || (byId(db.apars, i.aparId) || {}).bagianPemilik || '';
+        const isGood = i => i.items.every(x => x.nilai !== 'rusak');   // status inspeksi: Good bila tidak ada item rusak
+        const isExp = a => a.active && a.exp && a.exp < TODAY;
+        const validDate = d => {
+          const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || '');
+          if (!m) return false;
+          const x = new Date(+m[1], +m[2] - 1, +m[3]);
+          return x.getFullYear() === +m[1] && x.getMonth() === +m[2] - 1 && x.getDate() === +m[3];
+        };
+        const coordValue = v => v == null || String(v).trim() === '' ? null : Number(v);
+        const coordError = (lat, lng) => {
+          const a = coordValue(lat), b = coordValue(lng);
+          if (a == null && b == null) return '';
+          if (a == null || b == null) return 'Latitude dan longitude harus diisi berpasangan.';
+          if (!Number.isFinite(a) || a < -90 || a > 90) return 'Latitude harus berada di antara -90 dan 90.';
+          if (!Number.isFinite(b) || b < -180 || b > 180) return 'Longitude harus berada di antara -180 dan 180.';
+          return '';
+        };
+        const hasCoords = a => {
+          const lat = coordValue(a.lat), lng = coordValue(a.lng);
+          return lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+        };
+        const coordDisplay = v => v == null || v === '' || !Number.isFinite(Number(v)) ? '-' : Number(v).toFixed(6);
+        const coordText = a => hasCoords(a) ? `${Number(a.lat).toFixed(6)}, ${Number(a.lng).toFixed(6)}` : '-';
+        const locationSnapshot = a => ({ areaId: a.areaId || '', areaName: areaNm(a.areaId), lat: coordValue(a.lat), lng: coordValue(a.lng) });
+        function locationChanges(previous, next) {
+          const from = locationSnapshot(previous), to = locationSnapshot(next), changes = [];
+          if (from.areaId !== to.areaId) changes.push('Area berubah');
+          if (from.lat !== to.lat || from.lng !== to.lng) changes.push('Koordinat berubah');
+          return { from, to, changes };
+        }
+        function createMovement(ap, previous, next, source) {
+          const change = locationChanges(previous, next);
+          if (!change.changes.length) return null;
+          return {
+            id: uid(), aparId: next.id || ap.id, kode: next.kode || ap.kode, bagianPemilik: next.bagianPemilik || previous.bagianPemilik || '',
+            at: new Date().toISOString(), by: USER.nama, source, ...change
+          };
+        }
+        const movementWarning = movement => {
+          const owner = movement.bagianPemilik || 'bagian pemilik belum diisi';
+          return `Peringatan perpindahan: APAR ${movement.kode} milik ${owner} terdeteksi di area ${movement.to.areaName}. ${movement.changes.join(' dan ')} (${movement.from.areaName} → ${movement.to.areaName}).`;
+        };
+        const movementDate = value => {
+          const date = new Date(value);
+          return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString('id-ID');
+        };
+        const APAR_PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+        const photoFileError = file => !file ? '' : (!file.type || !file.type.startsWith('image/')) ? 'Pilih file gambar dengan tipe yang didukung.' : file.size > APAR_PHOTO_MAX_BYTES ? 'Ukuran gambar maksimal 5 MB.' : '';
+        const mapStatus = a => {
+          if (!validDate(a.exp)) return 'unknown';
+          const days = Math.round((new Date(a.exp + 'T00:00:00') - new Date(TODAY + 'T00:00:00')) / 86400000);
+          return days < 0 ? 'expired' : days < 30 ? 'soon' : 'safe';
+        };
+        const inspStat = i => isGood(i) ? '<span class="bdg g">Good</span>' : '<span class="bdg r">Not Good</span>';
+        const opts = (arr, sel, ph) => (ph != null ? `<option value="">${ph}</option>` : '') + arr.map(([v, l]) => `<option value="${esc(v)}"${String(v) === String(sel) ? ' selected' : ''}>${esc(l)}</option>`).join('');
+        const areaOpts = (sel, ph) => {
+          const visibleIds = new Set(visibleApars().map(item => item.areaId));
+          return opts(db.areas.filter(area => canManageApar() || visibleIds.has(area.id)).map(a => [a.id, a.nama]), sel, ph);
+        };
+        const years = () => { const y = NOW.getFullYear(), set = new Set([y - 2, y - 1, y, y + 1]); visibleInspections().forEach(i => set.add(+i.date.slice(0, 4))); if (canAccessModule(USER, 'keuangan', AUTH_DB)) db.fin.forEach(f => set.add(+f.tgl.slice(0, 4))); return [...set].sort(); };
+
+        /* ---------- export Excel (.xlsx asli, pakai js/xlsx-lite.js) ---------- */
+        function exportX(name, head, rows) {
+          if (typeof XL === 'undefined') return toast('xlsx-lite.js belum dimuat', 'err');
+          XL.download(name + '.xlsx', [{ name: 'Data', rows: [head.map(h => ({ v: h, s: 1 })), ...rows] }]);
+        }
+
+        /* ---------- modal & dialog ---------- */
+        function openM(html, w) {
+          const m = $('#modal'); m.innerHTML = `<div class="pop bg-white rounded-xl shadow-xl w-full ${w || 'max-w-lg'} max-h-[92vh] flex flex-col overflow-hidden">${html}</div>`;
+          m.classList.remove('hidden'); m.classList.add('flex'); document.body.style.overflow = 'hidden';
+        }
+        function closeM() { const m = $('#modal'); m.classList.add('hidden'); m.classList.remove('flex'); m.innerHTML = ''; document.body.style.overflow = ''; }
+        $('#modal').addEventListener('mousedown', e => { if (e.target.id === 'modal') closeM(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeM(); });
+        const mHead = (t, sub) => `<div class="apar-modal-head bg-[#1e273e] text-white px-5 py-3.5 flex items-center justify-between flex-shrink-0"><div><h3 class="font-bold text-sm tracking-wide">${t}</h3>${sub ? `<p class="text-[11px] text-slate-400 mt-0.5">${sub}</p>` : ''}</div><button onclick="APR.close()" class="text-slate-400 hover:text-white text-base"><i class="fa-solid fa-xmark"></i></button></div>`;
+
+        // form generik: fields = [{k,l,t:'text|number|date|select|textarea|check',o:[[v,l]],req,ph,full}]
+        let FORM = null;
+        function formM(title, fields, vals, onSave) {
+          FORM = { fields, onSave };
+          const inp = f => {
+            const v = vals[f.k] == null ? '' : vals[f.k], id = 'ff_' + f.k;
+            if (f.t === 'select') return `<select id="${id}" class="inp">${opts(f.o, v, f.ph)}</select>`;
+            if (f.t === 'textarea') return `<textarea id="${id}" rows="3" class="inp" placeholder="${esc(f.ph || '')}">${esc(v)}</textarea>`;
+            if (f.t === 'check') return `<label class="flex items-center gap-2 text-xs text-slate-600 pt-2"><input type="checkbox" id="${id}" ${v ? 'checked' : ''} class="w-4 h-4"> ${esc(f.ph || 'Aktif')}</label>`;
+            const numberAttrs = f.t === 'number' ? `step="${esc(f.step || 'any')}" ${f.min == null ? 'min="0"' : `min="${esc(f.min)}"`} ${f.max == null ? '' : `max="${esc(f.max)}"`}` : '';
+            return `<input id="${id}" type="${f.t || 'text'}" ${numberAttrs} value="${esc(v)}" placeholder="${esc(f.ph || '')}" class="inp">`;
+          };
+          openM(mHead(title) + `<div class="p-5 overflow-y-auto"><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${fields.map(f => `<div class="${f.full ? 'sm:col-span-2' : ''}"><label class="lbl">${f.l}${f.req ? ' <span class="text-rose-500">*</span>' : ''}</label>${inp(f)}</div>`).join('')}</div>
+    <p id="ffErr" class="text-xs text-rose-600 mt-3 hidden"></p>
+    <div class="flex justify-end gap-2 mt-5"><button class="btn btn-g" onclick="APR.close()">Batal</button><button class="btn btn-p" onclick="APR.submit()"><i class="fa-solid fa-floppy-disk"></i> Simpan</button></div></div>`);
+          const first = $('#modal input,#modal select'); if (first) first.focus();
+        }
+        function confirmM(msg, onOk, label) {
+          FORM = { onOk };
+          openM(mHead('Konfirmasi') + `<div class="p-5"><p class="text-sm text-slate-600 leading-relaxed">${msg}</p><div class="flex justify-end gap-2 mt-5"><button class="btn btn-g" onclick="APR.close()">Batal</button><button class="btn btn-x" onclick="APR.ok()"><i class="fa-solid fa-trash"></i> ${label || 'Hapus'}</button></div></div>`, 'max-w-md');
+        }
+
+        /* ---------- tabel generik: cari/filter → gambar ulang hanya tabelnya, dengan paging ---------- */
+        const TB = {}, PG = {}, FL = {};
+        const fl = id => FL[id] || (FL[id] = {});
+        function tbl(id, cols, get, sumFn) { TB[id] = { cols, get, sumFn }; PG[id] = PG[id] || { p: 1, s: 10 }; return `<div id="tb_${id}">${tbHtml(id)}</div>`; }
+        function tbHtml(id) {
+          const { cols, get } = TB[id], all = get(), pg = PG[id], n = all.length, pages = Math.max(1, Math.ceil(n / pg.s));
+          if (pg.p > pages) pg.p = pages;
+          const st = (pg.p - 1) * pg.s, rows = all.slice(st, st + pg.s);
+          return `<div class="overflow-x-auto rounded-lg border border-slate-200"><table class="tb"><thead><tr>${cols.map(c => `<th class="${c.cls || ''}">${c.h}</th>`).join('')}</tr></thead><tbody>`
+            + (rows.length ? rows.map((r, i) => `<tr>${cols.map(c => `<td class="${c.cls || ''}">${c.c(r, st + i)}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${cols.length}" class="!py-10 text-center text-slate-400">Tidak ada data</td></tr>`)
+            + `</tbody></table></div><div class="flex flex-wrap items-center justify-between gap-2 mt-3 text-xs text-slate-500">
+      <div class="flex items-center gap-2"><span>Tampilkan</span><select class="inp !w-auto !py-1" onchange="APR.ps('${id}',this.value)">${[10, 25, 50, 100].map(x => `<option${x === pg.s ? ' selected' : ''}>${x}</option>`).join('')}</select><span>${n ? `${st + 1}–${st + rows.length} dari ${n}` : '0 data'}</span></div>
+      <div class="flex items-center gap-1"><button class="btn btn-g btn-s" ${pg.p <= 1 ? 'disabled' : ''} onclick="APR.pg('${id}',-1)"><i class="fa-solid fa-chevron-left"></i></button><span class="px-2">Hal ${pg.p} / ${pages}</span><button class="btn btn-g btn-s" ${pg.p >= pages ? 'disabled' : ''} onclick="APR.pg('${id}',1)"><i class="fa-solid fa-chevron-right"></i></button></div></div>`;
+        }
+        function tbDraw(id) { const e = $('#tb_' + id); if (e) e.innerHTML = tbHtml(id); const t = TB[id]; if (t && t.sumFn) { const s = $('#sum_' + id); if (s) s.innerHTML = t.sumFn(t.get()); } }
+
+        /* ---------- potongan tampilan ---------- */
+        const card = (h, cls) => `<div class="apar-card bg-white p-4 md:p-5 rounded-xl shadow-sm border border-slate-200 ${cls || ''}">${h}</div>`;
+        const head = (t, sub, right) => `<div class="flex flex-wrap items-center justify-between gap-3"><div><h2 class="text-lg md:text-xl font-semibold text-slate-800">${t}</h2>${sub ? `<p class="text-xs text-slate-500 mt-0.5">${sub}</p>` : ''}</div><div class="flex flex-wrap gap-2">${right || ''}</div></div>`;
+        const fld = (l, h) => `<div><label class="lbl">${l}</label>${h}</div>`;
+        const fsel = (id, k, label, o) => fld(label, `<select class="inp" onchange="APR.f('${id}','${k}',this.value)">${o}</select>`);
+        const fdate = (id, k, label) => fld(label, `<input type="date" class="inp" value="${fl(id)[k] || ''}" onchange="APR.f('${id}','${k}',this.value)">`);
+        const fsearch = (id, label, ph) => fld(label || 'Cari', `<input type="search" class="inp" placeholder="${ph || 'Kode / lokasi…'}" value="${esc(fl(id).q || '')}" oninput="APR.fs('${id}',this.value)">`);
+        const acts = (...a) => `<div class="flex gap-1.5">${a.join('')}</div>`;
+        const ab = (cls, ic, fn, t) => `<button class="ab ${cls}" title="${t}" onclick="${fn}"><i class="fa-solid ${ic}"></i></button>`;
+        const ncol = { h: 'No', cls: 'nw !w-12 text-center', c: (r, i) => i + 1 };
+        const photo = (src, h) => src ? `<img src="${esc(src)}" class="rounded-lg border border-slate-200 object-cover ${h || 'h-24'}" alt="foto">` : `<div class="${h || 'h-24'} w-28 rounded-lg border border-dashed border-slate-300 bg-slate-50 flex flex-col items-center justify-center text-slate-400 text-[10px] gap-1"><i class="fa-regular fa-image text-lg"></i>Belum ada foto</div>`;
+        const filt = inner => `<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 items-end">${inner}</div>`;
+
+        /* =====================================================================
+           HALAMAN
+           ===================================================================== */
+        const view = $('#view');
+        let charts = [];
+        const ST = { dash: { s: iso(NOW.getFullYear(), NOW.getMonth(), 1).slice(0, 7), e: TODAY.slice(0, 7) }, belum: { m: NOW.getMonth(), y: NOW.getFullYear() }, yearly: { y: NOW.getFullYear(), kode: '', run: false }, mapArea: '' };
+
+        /* ---- DASHBOARD ---- */
+        function pDashboard() {
+          const D = ST.dash, a = D.s + '-01', b = D.e + '-31';
+          const canSeeFin = canAccessModule(USER, 'keuangan', AUTH_DB);
+          const ins = visibleInspections().filter(x => x.date >= a && x.date <= b), good = ins.filter(isGood).length;
+          const exp = canSeeFin ? sum(db.fin.filter(f => f.tgl >= a && f.tgl <= b).map(f => f.biaya)) : 0;
+          const act = visibleApars().filter(x => x.active);
+          const rekap = db.areas.map((ar, i) => {
+            const aps = act.filter(x => x.areaId === ar.id), ids = new Set(aps.map(x => x.id)), mine = ins.filter(x => ids.has(x.aparId));
+            return { no: i + 1, area: ar.nama, total: aps.length, sudah: new Set(mine.map(x => x.aparId)).size, good: mine.filter(isGood).length, ng: mine.filter(x => !isGood(x)).length };
+          }).filter(r => r.total);
+          const nExp = act.filter(isExp).length, doneIds = new Set(ins.map(x => x.aparId)), nBelum = act.filter(x => !doneIds.has(x.id)).length;
+          const recentMoves = visibleMovements().filter(item => Date.now() - new Date(item.at).getTime() <= 30 * 86400000).sort((a, b) => b.at.localeCompare(a.at));
+          const [ey, em] = D.e.split('-').map(Number), lastDay = new Date(ey, em, 0).getDate();
+          const stat = (bg, t, v, ic, extra) => `<div class="${bg} text-white p-5 rounded-xl shadow-sm flex flex-col justify-between h-28 md:h-32 relative overflow-hidden"><div class="z-10"><h3 class="text-xs font-bold uppercase tracking-wider text-white/90">${t}</h3><p class="text-3xl md:text-4xl font-extrabold mt-2 tracking-tight">${v}</p></div><div class="absolute right-4 bottom-3 text-white/20 text-5xl md:text-6xl pointer-events-none"><i class="fa-solid ${ic}"></i></div>${extra || ''}</div>`;
+          view.innerHTML = `<h2 class="text-lg md:text-xl font-semibold text-slate-800">Halo ${esc(USER.nama)}</h2>
+  ${card(`<div class="flex flex-col md:flex-row items-stretch md:items-end gap-3"><div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+      ${fld('Bulan Mulai', `<input type="month" id="dS" value="${D.s}" class="inp">`)}${fld('Bulan Selesai', `<input type="month" id="dE" value="${D.e}" class="inp">`)}</div>
+      <div class="flex gap-2"><button class="btn btn-t flex-1 md:flex-none" onclick="APR.dashFilter()"><i class="fa-solid fa-filter"></i> Filter</button><button class="btn btn-r flex-1 md:flex-none" onclick="APR.dashReset()"><i class="fa-solid fa-rotate-right"></i> Reset</button></div></div>`)}
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${stat('bg-[#f87171]', 'TOTAL NOT GOOD', ins.length - good, 'fa-circle-xmark')}${stat('bg-[#2dd4bf]', 'TOTAL GOOD', good, 'fa-circle-check')}
+    ${canSeeFin ? stat('bg-[#38bdf8]', 'PENGELUARAN', rp(exp), 'fa-money-bill-wave') : ''}</div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="lg:col-span-2 space-y-4 min-w-0">
+      ${card(`<h3 class="text-sm font-bold text-slate-800 mb-4">Grafik Inspeksi APAR</h3><div class="h-64 w-full relative"><canvas id="cIns"></canvas></div>`)}
+      ${canSeeFin ? card(`<h3 class="text-sm font-bold text-slate-800 mb-4">Grafik Pengeluaran Bulanan ${ey}</h3><div class="h-44 w-full relative"><canvas id="cExp"></canvas></div>`) : ''}
+      <div class="space-y-2" id="alerts">
+        ${nExp ? `<div class="bg-[#f87171] text-white p-3 px-4 rounded-lg shadow-sm flex items-center justify-between text-xs"><div><p class="font-bold tracking-wide uppercase text-[11px]">PERINGATAN KADALUARSA!</p><p class="text-white/90 mt-0.5">${nExp} APAR sudah kadaluarsa, mohon segera refill</p></div><a href="#kadaluarsa" class="btn bg-white/20 hover:bg-white/30 text-white btn-s">Lihat</a></div>` : ''}
+        ${nBelum ? `<div class="bg-[#facc15] text-slate-900 p-3 px-4 rounded-lg shadow-sm flex items-center justify-between text-xs"><div><p class="font-bold tracking-wide uppercase text-[11px]">APAR BELUM INSPEKSI!</p><p class="text-slate-800 mt-0.5">${nBelum} APAR belum diinspeksi pada periode ini</p></div><a href="#belum" class="btn bg-black/10 hover:bg-black/20 text-slate-900 btn-s">Lihat</a></div>` : ''}
+        ${recentMoves.length ? `<div class="bg-amber-100 text-amber-950 p-3 px-4 rounded-lg border border-amber-300 text-xs"><p class="font-bold tracking-wide uppercase text-[11px]">PERINGATAN PERPINDAHAN APAR</p><p class="mt-1">${esc(movementWarning(recentMoves[0]))}</p><a href="#perpindahan" class="inline-block mt-2 underline">Lihat ${recentMoves.length} catatan dalam 30 hari</a></div>` : ''}
+      </div></div>
+    <div class="min-w-0">${card(`<h3 class="text-sm font-bold text-slate-800">Rekap Inspeksi Bulanan</h3><p class="text-[11px] text-slate-400 font-medium mb-3">1 ${BLN[+D.s.slice(5) - 1]} ${D.s.slice(0, 4)} hingga ${lastDay} ${BLN[em - 1]} ${ey}</p>
+      <div class="overflow-x-auto"><table class="tb"><thead><tr><th class="text-center">No</th><th>Area</th><th class="text-center">Total</th><th class="text-center">Sudah</th></tr></thead><tbody>
+      ${rekap.map(r => `<tr><td class="text-center text-slate-400">${r.no}</td><td class="font-semibold text-slate-700">${esc(r.area)}</td><td class="text-center font-bold">${r.total}</td><td class="text-center font-bold ${r.sudah ? 'text-teal-600' : 'text-slate-400'}">${r.sudah}</td></tr>`).join('')}</tbody></table></div>
+      <div class="mt-4 pt-3 border-t-2 border-slate-200 bg-sky-100/60 p-2.5 rounded-lg flex items-center justify-between text-xs font-bold text-slate-700"><span class="uppercase tracking-wider">Total</span><div class="flex gap-8 pr-2"><span>${sum(rekap.map(r => r.total))}</span><span class="text-blue-600">${sum(rekap.map(r => r.sudah))}</span></div></div>`)}</div></div>`;
+          if (!window.Chart) return;
+          charts.push(new Chart($('#cIns'), {
+            type: 'bar', data: { labels: rekap.map(r => r.area), datasets: [
+              { label: 'Good', data: rekap.map(r => r.good), backgroundColor: '#16a34a', borderRadius: 5, borderSkipped: false },
+              { label: 'Not Good', data: rekap.map(r => r.ng), backgroundColor: '#dc2626', borderRadius: 5, borderSkipped: false }
+            ] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 10 }, color: '#64748b' } } }, scales: {
+              x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 60, color: '#64748b' } },
+              y: { beginAtZero: true, grid: { color: '#e8edf5' }, ticks: { precision: 0, font: { size: 10 }, color: '#64748b' } }
+            } }
+          }));
+          if (!canSeeFin) return;
+          const mon = BLN3.map((_, i) => sum(db.fin.filter(f => f.tgl.slice(0, 7) === `${ey}-${pad(i + 1)}`).map(f => f.biaya)));
+          charts.push(new Chart($('#cExp'), {
+            type: 'line', data: { labels: BLN3, datasets: [{ label: 'Pengeluaran (Rp)', data: mon, borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,.1)', fill: true, tension: .3 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } } }
+          }));
+        }
+
+        /* ---- MASTER: APAR ---- */
+        const getApar = () => {
+          const f = fl('apar'), q = (f.q || '').toLowerCase();
+          return visibleApars().filter(a => (!f.area || a.areaId === f.area) && (!f.jenis || a.jenis === f.jenis) && (!f.isi || a.isi === f.isi) && (!f.act || (f.act === '1') === !!a.active) && (!q || (a.kode + ' ' + a.bagianPemilik + ' ' + a.lokasi + ' ' + areaNm(a.areaId)).toLowerCase().includes(q)))
+            .sort((x, y) => x.kode.localeCompare(y.kode, undefined, { numeric: true }));
+        };
+        function pApar() {
+          view.innerHTML = head('Master APAR', 'Daftar tabung pemadam api', canManageApar() ? `<button class="btn btn-p" onclick="APR.aparForm()"><i class="fa-solid fa-plus"></i> Add APAR</button>` : '')
+            + card(filt(fsel('apar', 'area', 'Area', areaOpts(fl('apar').area, 'Semua area')) + fsel('apar', 'jenis', 'Jenis Pemadam', opts([['APAR', 'APAR'], ['APAB', 'APAB']], fl('apar').jenis, 'Semua'))
+              + fsel('apar', 'isi', 'Jenis Isi', opts(['Powder', 'CO2', 'Foam', 'Halotron'].map(x => [x, x]), fl('apar').isi, 'Semua')) + fsel('apar', 'act', 'Status', opts([['1', 'Aktif'], ['0', 'Nonaktif']], fl('apar').act, 'Semua')))
+              + `<div class="mb-4 max-w-sm">${fsearch('apar', 'Cari', 'Kode / area / lokasi…')}</div>`
+              + tbl('apar', [ncol, { h: 'Nomor APAR', c: a => `<b class="text-slate-700">${esc(a.kode)}</b>` }, { h: 'Area', c: a => esc(areaNm(a.areaId)) }, { h: 'Bagian Pemilik', c: a => esc(a.bagianPemilik) || '<span class="text-slate-300">Belum diisi</span>' }, { h: 'Lokasi', c: a => esc(a.lokasi) }, { h: 'Latitude', cls: 'nw', c: a => coordDisplay(a.lat) }, { h: 'Longitude', cls: 'nw', c: a => coordDisplay(a.lng) }, { h: 'Jenis Isi', c: a => esc(a.isi) },
+                { h: 'Ukuran', c: a => a.ukuran }, { h: 'Satuan', c: a => esc(a.satuan) }, { h: 'Tgl Kadaluarsa', cls: 'nw', c: a => fmtD(a.exp) + (isExp(a) ? ' <span class="bdg r">EXP</span>' : '') },
+                { h: 'Jenis Pemadam', c: a => `<span class="bdg ${a.jenis === 'APAB' ? 'y' : 'b'}">${a.jenis}</span>` }, { h: 'Catatan', c: a => esc(a.catatan) || '<span class="text-slate-300">-</span>' },
+                { h: 'Active', c: a => a.active ? '<span class="bdg g">Aktif</span>' : '<span class="bdg s">Nonaktif</span>' },
+                { h: 'Action', c: a => canManageApar() ? acts(ab('q', 'fa-qrcode', `APR.qr('${a.id}')`, 'Lihat QR'), ab('e', 'fa-pen', `APR.aparForm('${a.id}')`, 'Edit'), ab('d', 'fa-trash', `APR.aparDel('${a.id}')`, 'Hapus')) : ab('q', 'fa-qrcode', `APR.qr('${a.id}')`, 'Lihat QR') }], getApar));
+        }
+        function aparForm(id) {
+          if (!canManageApar()) return toast('Akses ditolak', 'err');
+          const a = id ? apar(id) : { satuan: 'KG', jenis: 'APAR', isi: 'Powder', active: true, bagianPemilik: '' };
+          formM(id ? 'Edit APAR' : 'Add APAR', [
+            { k: 'kode', l: 'Nomor APAR', req: 1, ph: 'mis. 001' }, { k: 'areaId', l: 'Area', t: 'select', o: db.areas.map(x => [x.id, x.nama]), ph: '— pilih area —', req: 1 },
+            { k: 'bagianPemilik', l: 'Bagian Pemilik', req: 1, ph: 'mis. IT atau PPC' },
+            { k: 'lokasi', l: 'Lokasi', ph: 'mis. Dekat pintu masuk' }, { k: 'isi', l: 'Jenis Isi', t: 'select', o: ['Powder', 'CO2', 'Foam', 'Halotron'].map(x => [x, x]) },
+            { k: 'ukuran', l: 'Ukuran', t: 'number' }, { k: 'satuan', l: 'Satuan', t: 'select', o: [['KG', 'KG'], ['LTR', 'LTR']] },
+            { k: 'exp', l: 'Tanggal Kadaluarsa', t: 'date' }, { k: 'lat', l: 'Latitude', t: 'number', min: -90, max: 90, ph: '-90 s/d 90' },
+            { k: 'lng', l: 'Longitude', t: 'number', min: -180, max: 180, ph: '-180 s/d 180' }, { k: 'jenis', l: 'Jenis Pemadam', t: 'select', o: [['APAR', 'APAR'], ['APAB', 'APAB']] },
+            { k: 'catatan', l: 'Catatan', t: 'textarea', full: 1 }, { k: 'active', l: 'Status', t: 'check', ph: 'Aktif', full: 1 }], a, v => {
+              if (db.apars.some(x => x.id !== id && x.kode.toLowerCase() === v.kode.toLowerCase())) return 'Kode APAR sudah dipakai.';
+              if (v.exp && !validDate(v.exp)) return 'Tanggal kadaluarsa tidak valid.';
+              const coordProblem = coordError(v.lat, v.lng);
+              if (coordProblem) return coordProblem;
+              v.ukuran = v.ukuran === '' ? 0 : +v.ukuran;
+              v.lat = coordValue(v.lat); v.lng = coordValue(v.lng);
+              const existing = id ? apar(id) : null, previous = existing ? { ...existing } : null;
+              const next = { ...(existing || {}), ...v };
+              const movement = existing ? createMovement(existing, previous, next, 'Master APAR') : null;
+              if (existing) Object.assign(existing, v); else db.apars.push({ id: uid(), ...v });
+              if (movement) db.perpindahan.unshift(movement);
+              if (!dbSave()) {
+                if (existing) Object.assign(existing, previous); else db.apars.pop();
+                if (movement) db.perpindahan = db.perpindahan.filter(item => item.id !== movement.id);
+                return;
+              }
+              render();
+              toast(movement ? movementWarning(movement) : 'APAR disimpan', movement ? 'err' : undefined);
+            });
+        }
+
+        /* ---- INSPEKSI BARU ---- */
+        function pInspeksi() {
+          if (!canManageApar()) return toast('Akses ditolak', 'err');
+          const active = db.apars.filter(a => a.active), selected = active.some(a => a.id === ST.insApar) ? ST.insApar : active[0] ? active[0].id : '';
+          ST.insApar = selected;
+          view.innerHTML = head('Inspeksi APAR', 'Catat kondisi tabung, tanggal kadaluarsa, dan lokasi terkini')
+            + card(`<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-end">
+              ${fld('Kode APAR', `<select id="insApar" class="inp" onchange="APR.insSelect()">${opts(active.map(a => [a.id, `${a.kode} — ${areaNm(a.areaId)}`]), selected, '— pilih APAR —')}</select>`)}
+              ${fld('Tanggal Inspeksi', `<input id="insDate" type="date" class="inp" value="${TODAY}">`)}
+              ${fld('Tanggal Kadaluarsa', `<input id="insExp" type="date" class="inp" onchange="APR.locationPreview()">`)}
+              ${fld('Bagian Pemilik', `<input id="insOwner" class="inp" placeholder="Isi bagian pemilik APAR" maxlength="100">`)}
+              ${fld('Area', `<select id="insArea" class="inp" onchange="APR.locationPreview()">${areaOpts('', '— pilih area —')}</select>`)}
+              ${fld('Latitude', `<input id="insLat" type="number" step="any" min="-90" max="90" class="inp" placeholder="-90 s/d 90" oninput="APR.locationPreview()">`)}
+              ${fld('Longitude', `<input id="insLng" type="number" step="any" min="-180" max="180" class="inp" placeholder="-180 s/d 180" oninput="APR.locationPreview()">`)}
+            </div>
+            <div id="insLocationWarning" class="hidden mt-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-xs text-amber-900" role="status"></div>
+            <p class="mt-3 text-xs text-slate-500">Tanggal kadaluarsa dan area akan memperbarui data utama APAR. Riwayat inspeksi tetap menyimpan nilai keduanya saat pemeriksaan.</p>
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+              <button class="btn btn-g" onclick="APR.useLocation()"><i class="fa-solid fa-location-crosshairs"></i> Gunakan lokasi saya</button>
+              <span class="text-[11px] text-slate-500">Koordinat menunjukkan lokasi APAR saat inspeksi.</span>
+            </div>
+            <div class="mt-5">
+              <h3 class="text-sm font-bold text-slate-800 mb-2">Hasil Pemeriksaan</h3>
+              <div class="overflow-x-auto rounded-lg border border-slate-200"><table class="tb"><thead><tr><th>Item Check</th><th>Nilai</th><th>Keterangan</th><th>Foto</th><th>Perbaikan</th></tr></thead><tbody>
+                ${db.items.filter(x => x.active).map(x => `<tr>
+                  <td class="font-semibold">${esc(x.nama)}</td>
+                  <td><select id="insNilai_${x.id}" class="inp"><option value="">Pilih</option><option value="baik">Baik</option><option value="rusak">Rusak</option><option value="tidak ada">Tidak ada</option></select></td>
+                  <td><input id="insKet_${x.id}" class="inp" placeholder="Keterangan"></td>
+                  <td><input id="insItemFoto_${x.id}" type="file" accept="image/*" class="inp"></td>
+                  <td><select id="insPerbaikan_${x.id}" class="inp"><option value="">-</option><option value="sesuai">Sesuai</option><option value="tidak sesuai">Tidak sesuai</option></select></td>
+                </tr>`).join('') || '<tr><td colspan="5" class="text-center text-slate-400">Aktifkan item check terlebih dahulu.</td></tr>'}
+              </tbody></table></div>
+            </div>
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+              ${fld('Foto Bukti Inspeksi (opsional)', `<input id="insFoto" type="file" accept="image/*" class="inp">`)}
+              <div class="text-xs text-slate-500">Tipe file harus gambar; ukuran maksimal 5 MB per file.</div>
+            </div>
+            <div class="mt-5 flex justify-end"><button class="btn btn-p" onclick="APR.saveInspection()"><i class="fa-solid fa-floppy-disk"></i> Simpan Inspeksi</button></div>`);
+          if (selected) insSelect();
+        }
+
+        function insSelect() {
+          const id = $('#insApar').value, a = apar(id);
+          ST.insApar = id;
+          if (!a) return;
+          $('#insExp').value = a.exp || '';
+          $('#insOwner').value = a.bagianPemilik || '';
+          $('#insArea').value = a.areaId || '';
+          $('#insLat').value = a.lat == null ? '' : a.lat;
+          $('#insLng').value = a.lng == null ? '' : a.lng;
+          locationPreview();
+        }
+
+        function locationPreview() {
+          const id = $('#insApar').value, a = apar(id), warning = $('#insLocationWarning');
+          if (!a || !warning) return;
+          const next = { ...a, areaId: $('#insArea').value, lat: coordValue($('#insLat').value), lng: coordValue($('#insLng').value) };
+          const change = locationChanges(a, next);
+          const notices = [];
+          if (change.changes.length) notices.push(movementWarning({
+            kode: a.kode, bagianPemilik: a.bagianPemilik || '', changes: change.changes, from: change.from, to: change.to
+          }));
+          const expiry = $('#insExp').value;
+          if (expiry && validDate(expiry) && expiry !== (a.exp || '')) {
+            notices.push(`Tanggal kadaluarsa Data APAR akan diperbarui: ${a.exp ? fmtD(a.exp) : 'belum diatur'} → ${fmtD(expiry)}.`);
+          }
+          warning.textContent = notices.join('\n');
+          warning.classList.toggle('hidden', !notices.length);
+        }
+
+        function useLocation() {
+          if (!navigator.geolocation) return toast('Browser tidak mendukung geolokasi.', 'err');
+          navigator.geolocation.getCurrentPosition(pos => {
+            $('#insLat').value = pos.coords.latitude.toFixed(6);
+            $('#insLng').value = pos.coords.longitude.toFixed(6);
+            locationPreview();
+            toast('Koordinat lokasi berhasil diambil.');
+          }, err => toast('Lokasi tidak dapat diambil: ' + err.message, 'err'), { enableHighAccuracy: true, timeout: 12000 });
+        }
+
+        async function saveInspection() {
+          if (!canManageApar()) return toast('Akses ditolak', 'err');
+          const aparId = $('#insApar').value, a = apar(aparId), date = $('#insDate').value, exp = $('#insExp').value,
+                areaId = $('#insArea').value, latRaw = $('#insLat').value, lngRaw = $('#insLng').value,
+                bagianPemilik = $('#insOwner').value.trim();
+          if (!a || !a.active) return toast('Pilih APAR aktif.', 'err');
+          if (!bagianPemilik) return toast('Bagian pemilik wajib diisi.', 'err');
+          if (!validDate(date)) return toast('Tanggal inspeksi tidak valid.', 'err');
+          if (!validDate(exp)) return toast('Tanggal kadaluarsa wajib diisi dengan tanggal yang valid.', 'err');
+          if (!byId(db.areas, areaId)) return toast('Pilih area APAR yang valid.', 'err');
+          const coordProblem = coordError(latRaw, lngRaw);
+          if (coordProblem) return toast(coordProblem, 'err');
+          const activeItems = db.items.filter(x => x.active);
+          if (!activeItems.length) return toast('Aktifkan item check sebelum melakukan inspeksi.', 'err');
+          const rows = activeItems.map(x => {
+            const file = $('#insItemFoto_' + x.id).files[0];
+            return { item: x.id, nama: x.nama, nilai: $('#insNilai_' + x.id).value, ket: $('#insKet_' + x.id).value.trim(), file, perbaikan: $('#insPerbaikan_' + x.id).value };
+          });
+          if (rows.some(x => !x.nilai)) return toast('Pilih hasil untuk setiap item check.', 'err');
+          const files = [$('#insFoto').files[0], ...rows.map(x => x.file)].filter(Boolean);
+          const fileError = files.map(photoFileError).find(Boolean);
+          if (fileError) return toast(fileError, 'err');
+          const lat = coordValue(latRaw), lng = coordValue(lngRaw);
+          let foto = '';
+          try {
+            if ($('#insFoto').files[0]) foto = await readPhoto($('#insFoto').files[0]);
+            for (const row of rows) row.foto = row.file ? await readPhoto(row.file) : '';
+          } catch (e) { return toast(e.message || 'Gagal memproses foto inspeksi.', 'err'); }
+          const previous = { ...a }, next = { ...a, exp, areaId, lat, lng, bagianPemilik },
+                movement = createMovement(a, previous, next, 'Inspeksi APAR'), insp = {
+            id: uid(), aparId, date, exp, areaId, bagianPemilik, lokasi: a.lokasi || '', lat, lng,
+            petugas: USER.nama, pakai: 'belum', foto,
+            items: rows.map(({ item, nama, nilai, ket, foto: itemFoto, perbaikan }) => ({ item, nama, nilai, ket, foto: itemFoto, perbaikan }))
+          };
+          Object.assign(a, { exp, areaId, lat, lng, bagianPemilik });
+          db.insp.unshift(insp);
+          if (movement) db.perpindahan.unshift(movement);
+          if (!dbSave()) {
+            Object.assign(a, previous); db.insp.shift();
+            if (movement) db.perpindahan = db.perpindahan.filter(item => item.id !== movement.id);
+            return;
+          }
+          ST.insApar = '';
+          location.hash = '#riwayat';
+          render();
+          toast(movement ? movementWarning(movement) : 'Inspeksi APAR tersimpan.', movement ? 'err' : undefined);
+        }
+
+        /* ---- PETA APAR ---- */
+        let aparMap = null;
+        function pMap() {
+          if (aparMap) { aparMap.remove(); aparMap = null; }
+          const accessibleApars = visibleApars(),
+                located = accessibleApars.filter(a => hasCoords(a) && (!ST.mapArea || a.areaId === ST.mapArea)),
+                missing = accessibleApars.filter(a => !hasCoords(a)).length;
+          view.innerHTML = head('Peta APAR', 'Lokasi APAR berdasarkan koordinat terakhir', `<button class="btn btn-g" onclick="APR.pgMap()"><i class="fa-solid fa-rotate"></i> Muat ulang peta</button>`)
+            + card(`<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end mb-3">
+              ${fld('Filter Area', `<select class="inp" onchange="APR.mapFilter(this.value)">${areaOpts(ST.mapArea, 'Semua area')}</select>`)}
+              <p class="text-xs text-slate-500">${located.length} APAR bertanda lokasi${ST.mapArea ? ' pada area terpilih' : ''}. ${missing} APAR belum memiliki koordinat.</p>
+            </div>
+            <div class="map-legend mb-3">
+              <span><i class="map-dot" style="background:#dc2626"></i>Kadaluarsa</span>
+              <span><i class="map-dot" style="background:#f59e0b"></i>Kadaluarsa &lt; 30 hari</span>
+              <span><i class="map-dot" style="background:#16a34a"></i>Aman</span>
+              <span><i class="map-dot" style="background:#64748b"></i>Tanggal belum diatur</span>
+            </div><div id="aparMap" role="application" aria-label="Peta lokasi APAR"></div>`);
+          if (!window.L) { $('#aparMap').innerHTML = '<p class="p-5 text-sm text-rose-600">Leaflet gagal dimuat. Periksa koneksi internet untuk membuka peta.</p>'; return; }
+          aparMap = L.map('aparMap').setView([0, 0], 2);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(aparMap);
+          const colors = { expired: '#dc2626', soon: '#f59e0b', safe: '#16a34a', unknown: '#64748b' }, bounds = [];
+          located.forEach(a => {
+            const status = mapStatus(a), color = colors[status], point = [Number(a.lat), Number(a.lng)];
+            bounds.push(point);
+            L.circleMarker(point, { radius: 9, color: '#fff', weight: 2, fillColor: color, fillOpacity: .95 })
+              .bindPopup(`<b>APAR ${esc(a.kode)}</b><br>Area: ${esc(areaNm(a.areaId))}<br>Bagian pemilik: ${esc(a.bagianPemilik || '-')}<br>Kadaluarsa: ${esc(fmtD(a.exp))}<br>Status: ${status === 'expired' ? 'Kadaluarsa' : status === 'soon' ? 'Segera kadaluarsa' : status === 'safe' ? 'Aman' : 'Belum diatur'}${a.active ? '' : '<br>Status alat: Nonaktif'}`)
+              .addTo(aparMap);
+          });
+          if (bounds.length) aparMap.fitBounds(bounds, { padding: [24, 24], maxZoom: 16 });
+          setTimeout(() => { if (aparMap) aparMap.invalidateSize(); }, 100);
+        }
+
+        function aparDel(id) {
+          if (!canManageApar()) return toast('Akses ditolak', 'err');
+          const a = apar(id), ni = db.insp.filter(x => x.aparId === id).length, np = db.pakai.filter(x => x.aparId === id).length;
+          const nm = db.perpindahan.filter(item => item.aparId === id).length;
+          confirmM(`Hapus APAR <b>${esc(a.kode)}</b> (${esc(lokasi(a))})?` + ((ni || np || nm) ? `<br><br><span class="text-rose-600">Riwayat ikut terhapus: ${ni} inspeksi, ${np} penggunaan.${nm ? ` ${nm} riwayat perpindahan tetap disimpan.` : ''}</span> Jika hanya ingin menonaktifkan, gunakan Edit → Status.` : ''), () => {
+            db.apars = db.apars.filter(x => x.id !== id); db.insp = db.insp.filter(x => x.aparId !== id); db.pakai = db.pakai.filter(x => x.aparId !== id);
+            db.fin.forEach(f => { if (f.aparId === id) f.aparId = ''; }); dbSave(); closeM(); render(); toast('APAR dihapus');
+          });
+        }
+        function qr(id) {
+          const a = apar(id); if (!a) return;
+          openM(mHead('QR APAR ' + esc(a.kode)) + `<div class="p-5 text-center overflow-y-auto"><div id="qrBox" class="inline-block p-3 bg-white border border-slate-200 rounded-lg"></div>
+    <p class="mt-3 text-sm font-bold text-slate-700">Kode: ${esc(a.kode)}</p><p class="text-xs text-slate-500">${esc(lokasi(a))}</p><p class="text-xs text-slate-400">${esc(a.isi)} ${a.ukuran} ${esc(a.satuan)} · ${a.jenis}</p>
+    <div class="flex justify-center gap-2 mt-5"><button class="btn btn-g" onclick="APR.qrDl('${a.id}')"><i class="fa-solid fa-download"></i> Unduh PNG</button><button class="btn btn-p" onclick="APR.qrPrint('${a.id}')"><i class="fa-solid fa-print"></i> Cetak</button></div></div>`, 'max-w-sm');
+          if (window.QRCode) new QRCode($('#qrBox'), { text: 'APAR:' + a.kode, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
+          else $('#qrBox').innerHTML = '<p class="text-xs text-rose-500 p-6">Library QR belum termuat (cek koneksi internet).</p>';
+        }
+        function qrCanvas(a) {                                    // label: QR + kode + lokasi
+          const src = $('#qrBox canvas'); if (!src) return null;
+          const c = document.createElement('canvas'); c.width = 320; c.height = 380; const g = c.getContext('2d');
+          g.fillStyle = '#fff'; g.fillRect(0, 0, 320, 380); g.drawImage(src, 40, 20, 240, 240);
+          g.fillStyle = '#111'; g.textAlign = 'center'; g.font = 'bold 26px Arial'; g.fillText('APAR ' + a.kode, 160, 300);
+          g.font = '14px Arial'; g.fillText(lokasi(a).slice(0, 42), 160, 328); g.fillText(`${a.isi} ${a.ukuran} ${a.satuan} · ${a.jenis}`, 160, 350); return c;
+        }
+        function qrDl(id) { const a = apar(id), c = qrCanvas(a); if (!c) return toast('QR belum siap', 'err'); const l = document.createElement('a'); l.href = c.toDataURL('image/png'); l.download = `QR APAR ${a.kode}.png`; l.click(); }
+        function qrPrint(id) {
+          const a = apar(id), c = qrCanvas(a); if (!c) return toast('QR belum siap', 'err'); const w = window.open('', '_blank'); if (!w) return toast('Popup diblokir browser', 'err');
+          w.document.write(`<title>QR APAR ${esc(a.kode)}</title><body style="margin:0;text-align:center"><img src="${c.toDataURL()}" style="width:8cm" onload="print()">`); w.document.close();
+        }
+
+        /* ---- MASTER: ITEM CHECK ---- */
+        function pItem() {
+          if (!canManageApar()) return toast('Akses ditolak', 'err');
+          view.innerHTML = head('Master Item Check', 'Komponen yang diperiksa pada setiap inspeksi', `<button class="btn btn-p" onclick="APR.itemForm()"><i class="fa-solid fa-plus"></i> Add Item Check</button>`)
+            + card(tbl('item', [ncol, { h: 'Nama', c: x => `<b class="text-slate-700">${esc(x.nama)}</b>` }, { h: 'Active', c: x => x.active ? '<span class="bdg g">Aktif</span>' : '<span class="bdg s">Nonaktif</span>' },
+              { h: 'Action', c: x => acts(ab('e', 'fa-pen', `APR.itemForm('${x.id}')`, 'Edit'), ab('d', 'fa-trash', `APR.itemDel('${x.id}')`, 'Hapus')) }], () => db.items));
+        }
+        function itemForm(id) {
+          if (!canManageApar()) return toast('Akses ditolak', 'err');
+          const x = id ? byId(db.items, id) : { active: true };
+          formM(id ? 'Edit Item Check' : 'Add Item Check', [{ k: 'nama', l: 'Nama Item', req: 1, full: 1, ph: 'mis. Tabung' }, { k: 'active', l: 'Status', t: 'check', full: 1 }], x, v => {
+            if (db.items.some(i => i.id !== id && i.nama.toLowerCase() === v.nama.toLowerCase())) return 'Nama item sudah ada.';
+            if (id) { Object.assign(x, v); } else db.items.push({ id: uid(), ...v }); dbSave(); render(); toast('Item check disimpan');
+          });
+        }
+        function itemDel(id) { if (!canManageApar()) return toast('Akses ditolak', 'err'); const x = byId(db.items, id); confirmM(`Hapus item check <b>${esc(x.nama)}</b>?<br><span class="text-slate-500">Riwayat inspeksi lama tetap tersimpan. Untuk menyembunyikan saja, pilih Edit → nonaktif.</span>`, () => { db.items = db.items.filter(i => i.id !== id); dbSave(); closeM(); render(); toast('Item check dihapus'); }); }
+
+        /* ---- MASTER: AREA ---- */
+        const getArea = () => { const q = (fl('area').q || '').toLowerCase(); return db.areas.filter(a => !q || a.nama.toLowerCase().includes(q)); };
+        function pArea() {
+          if (!isAdmin()) return toast('Akses ditolak', 'err');
+          view.innerHTML = head('Master Area', 'Area / pos penempatan APAR', `<button class="btn btn-p" onclick="APR.areaForm()"><i class="fa-solid fa-plus"></i> Add Area</button>`)
+            + card(`<div class="mb-4 max-w-sm">${fsearch('area', 'Filter & Search', 'Cari nama area…')}</div>` + tbl('area', [ncol, { h: 'Nama', c: a => `<b class="text-slate-700">${esc(a.nama)}</b> <span class="text-slate-400 text-[11px]">(${db.apars.filter(x => x.areaId === a.id).length} APAR)</span>` },
+              { h: 'Action', c: a => acts(ab('e', 'fa-pen', `APR.areaForm('${a.id}')`, 'Edit'), ab('d', 'fa-trash', `APR.areaDel('${a.id}')`, 'Hapus')) }], getArea));
+        }
+        function areaForm(id) {
+          if (!isAdmin()) return toast('Akses ditolak', 'err');
+          const a = id ? byId(db.areas, id) : {};
+          formM(id ? 'Edit Area' : 'Add Area', [{ k: 'nama', l: 'Nama Area', req: 1, full: 1 }], a, v => {
+            if (db.areas.some(x => x.id !== id && x.nama.toLowerCase() === v.nama.toLowerCase())) return 'Nama area sudah ada.';
+            if (id) Object.assign(a, v); else db.areas.push({ id: uid(), ...v }); dbSave(); render(); toast('Area disimpan');
+          });
+        }
+        function areaDel(id) {
+          if (!isAdmin()) return toast('Akses ditolak', 'err');
+          const a = byId(db.areas, id), n = db.apars.filter(x => x.areaId === id).length;
+          if (n) return toast(`Area masih dipakai ${n} APAR — pindahkan/hapus APAR dulu`, 'err');
+          confirmM(`Hapus area <b>${esc(a.nama)}</b>?`, () => { db.areas = db.areas.filter(x => x.id !== id); dbSave(); closeM(); render(); toast('Area dihapus'); });
+        }
+
+        /* ---- LAPORAN: RIWAYAT INSPEKSI ---- */
+        const getRiw = () => {
+          const f = fl('riw'), q = (f.q || '').toLowerCase();
+          return visibleInspections().filter(i => { const a = byId(db.apars, i.aparId); return a && (!f.from || i.date >= f.from) && (!f.to || i.date <= f.to) && (!f.area || inspAreaId(i) === f.area) && (!f.st || (f.st === 'good') === isGood(i)) && (!q || (a.kode + ' ' + inspLokasi(i) + ' ' + i.petugas).toLowerCase().includes(q)); })
+            .sort((x, y) => y.date.localeCompare(x.date) || x.aparId.localeCompare(y.aparId));
+        };
+        const visibleMovements = () => db.perpindahan.filter(item =>
+          item && item.from && item.to && Array.isArray(item.changes) && typeof item.at === 'string' &&
+          [item.from.areaId, item.to.areaId].some(areaId => canViewData(USER, { areaId }, 'apar', AUTH_DB))
+        );
+        const movementAreaOpts = (sel, ph) => {
+          const ids = new Set(visibleMovements().flatMap(item => [item.from && item.from.areaId, item.to && item.to.areaId]).filter(Boolean));
+          return opts([...ids].map(id => [id, areaNm(id)]), sel, ph);
+        };
+        const getMovements = () => {
+          const f = fl('moves'), q = (f.q || '').toLowerCase();
+          return visibleMovements().filter(item =>
+            (!f.from || item.at.slice(0, 10) >= f.from) &&
+            (!f.to || item.at.slice(0, 10) <= f.to) &&
+            (!f.area || item.from.areaId === f.area || item.to.areaId === f.area) &&
+            (!q || `${item.kode} ${item.bagianPemilik} ${item.from.areaName} ${item.to.areaName} ${item.by}`.toLowerCase().includes(q))
+          ).sort((a, b) => b.at.localeCompare(a.at));
+        };
+        function pPerpindahan() {
+          view.innerHTML = head('Riwayat Perpindahan APAR', 'Catatan perubahan area dan koordinat APAR')
+            + card(`<div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-xs text-amber-900" role="status"><b>Peringatan:</b> perubahan area atau koordinat dicatat sebagai perpindahan. Periksa APAR yang terdeteksi di area berbeda dari bagian pemiliknya.</div>`
+              + filt(fdate('moves', 'from', 'Dari tanggal') + fdate('moves', 'to', 'Sampai tanggal') + fsel('moves', 'area', 'Area asal/tujuan', movementAreaOpts(fl('moves').area, 'Semua area')) + fld('Cari', `<input type="search" class="inp" placeholder="Nomor, bagian, area, petugas…" value="${esc(fl('moves').q || '')}" oninput="APR.fs('moves',this.value)">`))
+              + tbl('moves', [ncol, { h: 'Waktu', cls: 'nw', c: item => movementDate(item.at) },
+                { h: 'Nomor APAR', c: item => `<b>${esc(item.kode)}</b>` }, { h: 'Bagian Pemilik', c: item => esc(item.bagianPemilik) || '-' },
+                { h: 'Dari', c: item => `${esc(item.from.areaName)}<br><small>${esc(coordText(item.from))}</small>` },
+                { h: 'Terdeteksi di', c: item => `${esc(item.to.areaName)}<br><small>${esc(coordText(item.to))}</small>` },
+                { h: 'Perubahan', c: item => `<span class="bdg y">${esc(item.changes.join(' + '))}</span>` },
+                { h: 'Sumber', c: item => esc(item.source) }, { h: 'Petugas', c: item => esc(item.by) }], getMovements));
+        }
+        function pRiwayat() {
+          view.innerHTML = head('Riwayat Inspeksi', 'Log pemeriksaan APAR oleh petugas SHE', `<button class="btn btn-t" onclick="APR.exp('riw')"><i class="fa-solid fa-file-excel"></i> Export Excel</button>`)
+            + card(filt(fdate('riw', 'from', 'Dari tanggal') + fdate('riw', 'to', 'Sampai tanggal') + fsel('riw', 'area', 'Area', areaOpts(fl('riw').area, 'Semua area')) + fsel('riw', 'st', 'Status', opts([['good', 'Good'], ['ng', 'Not Good']], fl('riw').st, 'Semua')))
+              + `<div class="mb-4 max-w-sm">${fsearch('riw', 'Cari', 'Kode / lokasi / petugas…')}</div>`
+              + tbl('riw', [ncol, { h: 'APAR', c: i => `<b class="text-slate-700">${esc((byId(db.apars, i.aparId) || {}).kode)}</b>` }, { h: 'Lokasi', c: i => esc(inspLokasi(i)) }, { h: 'Bagian Pemilik', c: i => esc(inspOwner(i)) || '-' }, { h: 'Petugas', c: i => esc(i.petugas) },
+                { h: 'Tanggal', cls: 'nw', c: i => fmtD(i.date) }, { h: 'Tanggal Kadaluarsa', cls: 'nw', c: i => fmtD(inspExpiry(i)) },
+                { h: 'Status', c: i => inspStat(i) }, { h: 'Aksi', c: i => ab('v', 'fa-eye', `APR.view('${i.id}')`, 'Lihat detail') }], getRiw));
+        }
+        function viewInsp(id) {
+          const i = byId(db.insp, id); if (!i) return;
+          if (!canViewData(USER, { areaId: inspAreaId(i) }, 'apar', AUTH_DB)) return toast('Akses ditolak', 'err');
+          const a = byId(db.apars, i.aparId); if (!a) return;
+          const info = (l, v) => `<div><p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">${l}</p><p class="text-sm font-semibold text-slate-700 mt-0.5">${v}</p></div>`;
+          const inspectedApar = { areaId: inspAreaId(i), lokasi: i.lokasi || a.lokasi };
+          openM(mHead('Detail Inspeksi', `APAR ${esc(a.kode)}`) + `<div class="p-5 overflow-y-auto space-y-5">
+    <div class="flex flex-col sm:flex-row gap-5"><div class="grid grid-cols-2 gap-4 flex-1">${info('Lokasi', esc(lokasi(inspectedApar)))}${info('Bagian Pemilik', esc(inspOwner(i)) || '-')}${info('Koordinat', esc(coordText(i)))}${info('Tanggal Inspeksi', fmtL(i.date))}${info('Tanggal Kadaluarsa', fmtD(inspExpiry(i)))}${info('Petugas', esc(i.petugas))}
+      ${info('Status Penggunaan', i.pakai === 'sudah' ? '<span class="bdg y">Sudah dipakai</span>' : '<span class="bdg s">Belum dipakai</span>')}${info('Hasil', inspStat(i))}${info('Jenis', `${esc(a.isi)} ${a.ukuran} ${esc(a.satuan)} · ${a.jenis}`)}</div>
+      <div><p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Bukti Inspeksi</p>${photo(i.foto, 'h-28')}</div></div>
+    <div><h4 class="text-sm font-bold text-slate-800 mb-2">Hasil Pemeriksaan</h4><div class="overflow-x-auto rounded-lg border border-slate-200"><table class="tb"><thead><tr><th>Item Check</th><th>Nilai</th><th>Keterangan</th><th>Foto Inspeksi</th><th>Perbaikan</th></tr></thead><tbody>
+      ${i.items.map(x => `<tr><td class="font-semibold text-slate-700">${esc(x.nama)}</td><td>${x.nilai === 'baik' ? '<span class="bdg g">Baik</span>' : x.nilai === 'rusak' ? '<span class="bdg r">Rusak</span>' : '<span class="bdg s">Tidak ada</span>'}</td>
+        <td>${esc(x.ket) || '<span class="text-slate-300">-</span>'}</td><td>${x.foto ? photo(x.foto, 'h-14') : '<span class="text-slate-300">-</span>'}</td>
+        <td>${x.perbaikan ? `<span class="bdg ${x.perbaikan === 'sesuai' ? 'g' : 'r'}">${x.perbaikan === 'sesuai' ? 'Sesuai' : 'Tidak sesuai'}</span>` : '<span class="text-slate-300">-</span>'}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="flex justify-end"><button class="btn btn-g" onclick="APR.close()">Tutup</button></div></div>`, 'max-w-4xl');
+        }
+
+        /* ---- LAPORAN: BELUM INSPEKSI ---- */
+        const getBelum = () => {
+          const { m, y } = ST.belum, pre = `${y}-${pad(m + 1)}`, done = new Set(visibleInspections().filter(i => i.date.slice(0, 7) === pre).map(i => i.aparId));
+          return visibleApars().filter(a => a.active && !done.has(a.id)).sort((a, b) => a.kode.localeCompare(b.kode, undefined, { numeric: true }));
+        };
+        const sumBelum = l => `Total APAR yang belum diinspeksi bulan <b>${BLN[ST.belum.m]}</b> tahun <b>${ST.belum.y}</b> : <span class="text-rose-600 text-lg font-extrabold ml-1">${l.length}</span>`;
+        function pBelum() {
+          view.innerHTML = head('Belum Inspeksi', 'APAR aktif yang belum diperiksa pada periode terpilih')
+            + card(`<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 items-end">${fld('Bulan', `<select class="inp" onchange="APR.belumF('m',this.value)">${opts(BLN.map((b, i) => [i, b]), ST.belum.m)}</select>`)}${fld('Tahun', `<select class="inp" onchange="APR.belumF('y',this.value)">${opts(years().map(y => [y, y]), ST.belum.y)}</select>`)}</div>
+      <div id="sum_belum" class="mb-4 text-sm text-slate-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">${sumBelum(getBelum())}</div>`
+              + tbl('belum', [ncol, { h: 'Kode APAR', c: a => `<b class="text-slate-700">${esc(a.kode)}</b>` }, { h: 'Lokasi', c: a => esc(lokasi(a)) }, { h: 'Jenis', c: a => esc(a.isi) }], getBelum, sumBelum));
+        }
+
+        /* ---- LAPORAN: KADALUARSA ---- */
+        const getExp = () => visibleApars().filter(isExp).sort((a, b) => a.exp.localeCompare(b.exp));
+        function pExp() {
+          view.innerHTML = head('APAR Kadaluarsa', 'APAR aktif yang tanggal kadaluarsanya sudah lewat', `<button class="btn btn-t" onclick="APR.exp('exp')"><i class="fa-solid fa-file-excel"></i> Export Excel</button>`)
+            + card(`<div class="mb-4 text-sm text-slate-600 bg-rose-50 border border-rose-200 rounded-lg px-4 py-3">Total APAR kadaluarsa : <span class="text-rose-600 text-lg font-extrabold ml-1">${getExp().length}</span></div>`
+              + tbl('exp', [ncol, { h: 'Kode', c: a => `<b class="text-slate-700">${esc(a.kode)}</b>` }, { h: 'Area', c: a => esc(areaNm(a.areaId)) }, { h: 'Lokasi', c: a => esc(a.lokasi) }, { h: 'Tanggal Kadaluarsa', cls: 'nw', c: a => fmtD(a.exp) }, { h: 'Status', c: () => '<span class="bdg r">EXP</span>' }], getExp));
+        }
+
+        /* ---- LAPORAN: YEARLY ---- */
+        function pYearly() {
+          const Y = ST.yearly;
+          view.innerHTML = head('Laporan Yearly', 'Rekap pemeriksaan satu APAR selama satu tahun')
+            + card(`<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">${fld('Tahun', `<select id="yY" class="inp">${opts(years().map(y => [y, y]), Y.y)}</select>`)}
+      ${fld('Kode APAR', `<input id="yK" list="yKL" class="inp" placeholder="Ketik / pilih kode" value="${esc(Y.kode)}"><datalist id="yKL">${visibleApars().map(a => `<option value="${esc(a.kode)}">${esc(lokasi(a))}</option>`).join('')}</datalist>`)}
+      <button class="btn btn-p" onclick="APR.yearlyGo()"><i class="fa-solid fa-magnifying-glass"></i> Cari</button></div>`)
+            + `<div id="yOut"></div>`;
+          if (Y.run) yearlyOut();
+        }
+        function yearlyOut() {
+          const Y = ST.yearly, a = visibleApars().find(x => x.kode.toLowerCase() === Y.kode.trim().toLowerCase()), out = $('#yOut');
+          if (!a) { out.innerHTML = card(`<p class="text-sm text-rose-600"><i class="fa-solid fa-circle-exclamation"></i> APAR dengan kode <b>${esc(Y.kode)}</b> tidak ditemukan.</p>`); return; }
+          const mon = Array.from({ length: 12 }, (_, m) => visibleInspections().filter(i => i.aparId === a.id && i.date.slice(0, 7) === `${Y.y}-${pad(m + 1)}`).sort((p, q) => q.date.localeCompare(p.date))[0]);   // inspeksi terakhir tiap bulan
+          const cell = (ins, itemId) => {
+            if (!ins) return '<span class="text-slate-300">·</span>'; const r = ins.items.find(x => x.item === itemId); if (!r) return '<span class="text-slate-300">·</span>';
+            return r.nilai === 'baik' ? '<b class="text-emerald-600">B</b>' : r.nilai === 'rusak' ? '<b class="text-rose-600">R</b>' : '<b class="text-slate-500">T/A</b>';
+          };
+          const rem = itemId => mon.map((ins, m) => { const r = ins && ins.items.find(x => x.item === itemId); return r && r.ket ? `${BLN3[m]}: ${r.ket}` : ''; }).filter(Boolean).join('; ');
+          const it = db.items.filter(x => x.active), row = (l, v) => `<tr><td class="!py-0.5 !pr-4 text-slate-500 whitespace-nowrap">${l}</td><td class="!py-0.5">: <b class="text-slate-700">${v}</b></td></tr>`;
+          out.innerHTML = card(`<h3 class="text-center text-base md:text-lg font-bold text-slate-800 mb-4">Inspeksi Tahunan ${a.jenis}</h3>
+    <table class="mb-4 text-sm"><tbody>${row('Tahun', Y.y)}${row('Kode', esc(a.kode))}${row('Pemadam', a.jenis)}${row('Jenis', esc(a.isi))}${row('Ukuran', `${a.ukuran} ${esc(a.satuan)}`)}${row('Lokasi', esc(lokasi(a)))}</tbody></table>
+    <div class="overflow-x-auto rounded-lg border border-slate-200"><table class="tb yr"><thead><tr><th>Item Check</th>${Array.from({ length: 12 }, (_, i) => `<th>${i + 1}</th>`).join('')}<th>Remaks</th></tr></thead><tbody>
+    ${it.map(x => `<tr><td class="font-semibold text-slate-700 nw">${esc(x.nama)}</td>${mon.map(m => `<td>${cell(m, x.id)}</td>`).join('')}<td class="!text-left text-[11px] min-w-[180px]">${esc(rem(x.id)) || '<span class="text-slate-300">-</span>'}</td></tr>`).join('') || '<tr><td colspan="14" class="!py-8 text-center text-slate-400">Belum ada item check aktif</td></tr>'}</tbody></table></div>
+    <p class="text-[11px] text-slate-500 mt-3"><b class="text-emerald-600">B</b> = Baik &nbsp; <b class="text-rose-600">R</b> = Rusak &nbsp; <b>T/A</b> = Tidak Ada &nbsp; · = belum diinspeksi</p>`);
+        }
+
+        /* ---- LAPORAN: RIWAYAT PENGGUNAAN ---- */
+        const getPakai = () => {
+          const f = fl('pakai'), q = (f.q || '').toLowerCase();
+          return db.pakai.filter(p => { const a = apar(p.aparId); return a && (!f.from || p.tgl >= f.from) && (!f.to || p.tgl <= f.to) && (!f.st || p.status === f.st) && (!q || (p.petugas + ' ' + p.alasan + ' ' + a.kode + ' ' + lokasi(a)).toLowerCase().includes(q)); }).sort((x, y) => y.tgl.localeCompare(x.tgl));
+        };
+        function pPakai() {
+          view.innerHTML = head('Riwayat Penggunaan APAR', 'Catatan pemakaian APAR saat insiden / pelatihan', `<button class="btn btn-t" onclick="APR.exp('pakai')"><i class="fa-solid fa-file-excel"></i> Export Excel</button>`)
+            + card(filt(fdate('pakai', 'from', 'Dari tanggal') + fdate('pakai', 'to', 'Sampai tanggal') + fsel('pakai', 'st', 'Status', opts([['Belum Refill', 'Belum Refill'], ['Sudah Refill', 'Sudah Refill']], fl('pakai').st, 'Semua')) + fsearch('pakai', 'Cari', 'Petugas / kode / alasan…'))
+              + tbl('pakai', [ncol, { h: 'Petugas', c: p => esc(p.petugas) }, { h: 'Kode APAR', c: p => `<b class="text-slate-700">${esc((apar(p.aparId) || {}).kode || '-')}</b>` }, { h: 'Lokasi', c: p => esc(lokasi(apar(p.aparId))) },
+                { h: 'Tanggal', cls: 'nw', c: p => fmtD(p.tgl) }, { h: 'Alasan', c: p => esc(p.alasan) }, { h: 'Status', c: p => `<span class="bdg ${p.status === 'Sudah Refill' ? 'g' : 'y'}">${esc(p.status)}</span>` }], getPakai));
+        }
+
+        /* ---- KEUANGAN & VENDOR ---- */
+        function pVendor() {
+          if (!canManageApar()) return toast('Akses ditolak', 'err');
+          view.innerHTML = head('Vendor', 'Rekanan refill & pengadaan APAR', `<button class="btn btn-p" onclick="APR.vendorForm()"><i class="fa-solid fa-plus"></i> Tambah Vendor Baru</button>`)
+            + card(tbl('vendor', [ncol, { h: 'Nama Vendor', c: v => `<b class="text-slate-700">${esc(v.nama)}</b>` }, { h: 'Kontak', c: v => esc(v.kontak) }, { h: 'Aksi', c: v => acts(ab('e', 'fa-pen', `APR.vendorForm('${v.id}')`, 'Edit'), ab('d', 'fa-trash', `APR.vendorDel('${v.id}')`, 'Hapus')) }], () => db.vendors));
+        }
+        function vendorForm(id) {
+          if (!canManageApar()) return toast('Akses ditolak', 'err');
+          const v = id ? byId(db.vendors, id) : {};
+          formM(id ? 'Edit Vendor' : 'Tambah Vendor Baru', [{ k: 'nama', l: 'Nama Vendor', req: 1, full: 1 }, { k: 'kontak', l: 'Kontak', full: 1, ph: 'No. telp / email' }], v, x => { if (id) Object.assign(v, x); else db.vendors.push({ id: uid(), ...x }); dbSave(); render(); toast('Vendor disimpan'); });
+        }
+        function vendorDel(id) {
+          if (!canManageApar()) return toast('Akses ditolak', 'err');
+          const v = byId(db.vendors, id), n = db.fin.filter(f => f.vendorId === id).length; if (n) return toast(`Vendor dipakai di ${n} transaksi keuangan`, 'err');
+          confirmM(`Hapus vendor <b>${esc(v.nama)}</b>?`, () => { db.vendors = db.vendors.filter(x => x.id !== id); dbSave(); closeM(); render(); toast('Vendor dihapus'); });
+        }
+
+        function pNeed() {
+          if (!canManageApar()) return toast('Akses ditolak', 'err');
+          view.innerHTML = head('Kebutuhan', 'Jenis kebutuhan / pengeluaran APAR', `<button class="btn btn-p" onclick="APR.needForm()"><i class="fa-solid fa-plus"></i> Add Kebutuhan</button>`)
+            + card(tbl('need', [ncol, { h: 'Nama Kebutuhan', c: n => `<b class="text-slate-700">${esc(n.nama)}</b>` }, { h: 'Aksi', c: n => acts(ab('e', 'fa-pen', `APR.needForm('${n.id}')`, 'Edit'), ab('d', 'fa-trash', `APR.needDel('${n.id}')`, 'Hapus')) }], () => db.needs));
+        }
+        function needForm(id) {
+          if (!canManageApar()) return toast('Akses ditolak', 'err');
+          const n = id ? byId(db.needs, id) : {};
+          formM(id ? 'Edit Kebutuhan' : 'Add Kebutuhan', [{ k: 'nama', l: 'Nama Kebutuhan', req: 1, full: 1 }], n, x => { if (id) Object.assign(n, x); else db.needs.push({ id: uid(), ...x }); dbSave(); render(); toast('Kebutuhan disimpan'); });
+        }
+        function needDel(id) {
+          if (!canManageApar()) return toast('Akses ditolak', 'err');
+          const n = byId(db.needs, id), c = db.fin.filter(f => f.needId === id).length; if (c) return toast(`Kebutuhan dipakai di ${c} transaksi keuangan`, 'err');
+          confirmM(`Hapus kebutuhan <b>${esc(n.nama)}</b>?`, () => { db.needs = db.needs.filter(x => x.id !== id); dbSave(); closeM(); render(); toast('Kebutuhan dihapus'); });
+        }
+
+        const getFin = () => { const f = fl('fin'); return db.fin.filter(x => (!f.from || x.tgl >= f.from) && (!f.to || x.tgl <= f.to) && (!f.v || x.vendorId === f.v) && (!f.n || x.needId === f.n)).sort((a, b) => b.tgl.localeCompare(a.tgl)); };
+        const sumFin = l => `Total biaya (sesuai filter): <b class="text-slate-800 text-base ml-1">${rp(sum(l.map(x => x.biaya)))}</b> <span class="text-slate-400">· ${l.length} transaksi</span>`;
+        function pFin() {
+          if (!canManageApar()) return toast('Akses ditolak', 'err');
+          view.innerHTML = head('Keuangan', 'Transaksi pembelian / perawatan APAR', `<button class="btn btn-t" onclick="APR.exp('fin')"><i class="fa-solid fa-file-excel"></i> Export Excel</button><button class="btn btn-p" onclick="APR.finForm()"><i class="fa-solid fa-plus"></i> Add Transaksi</button>`)
+            + card(filt(fdate('fin', 'from', 'Dari tanggal') + fdate('fin', 'to', 'Sampai tanggal') + fsel('fin', 'v', 'Vendor', opts(db.vendors.map(v => [v.id, v.nama]), fl('fin').v, 'Semua vendor')) + fsel('fin', 'n', 'Kebutuhan', opts(db.needs.map(n => [n.id, n.nama]), fl('fin').n, 'Semua kebutuhan')))
+              + `<div id="sum_fin" class="mb-4 text-sm text-slate-600 bg-sky-50 border border-sky-200 rounded-lg px-4 py-3">${sumFin(getFin())}</div>`
+              + tbl('fin', [ncol, { h: 'Kode APAR', c: f => f.aparId && apar(f.aparId) ? `<b class="text-slate-700">${esc(apar(f.aparId).kode)}</b>` : '<span class="text-slate-300">-</span>' }, { h: 'Vendor', c: f => esc((byId(db.vendors, f.vendorId) || {}).nama || '-') },
+                { h: 'Kebutuhan', c: f => esc((byId(db.needs, f.needId) || {}).nama || '-') }, { h: 'Tanggal Pembelian', cls: 'nw', c: f => fmtD(f.tgl) }, { h: 'Biaya', cls: 'nw text-right', c: f => `<b class="text-slate-700">${rp(f.biaya)}</b>` },
+                { h: 'Aksi', c: f => acts(ab('e', 'fa-pen', `APR.finForm('${f.id}')`, 'Edit'), ab('d', 'fa-trash', `APR.finDel('${f.id}')`, 'Hapus')) }], getFin, sumFin));
+        }
+        function finForm(id) {
+          if (!canManageApar()) return toast('Akses ditolak', 'err');
+          const f = id ? byId(db.fin, id) : { tgl: TODAY };
+          formM(id ? 'Edit Transaksi' : 'Add Transaksi', [{ k: 'aparId', l: 'Kode APAR', t: 'select', o: db.apars.map(a => [a.id, a.kode + ' — ' + lokasi(a)]), ph: '— tanpa APAR (mis. beli baru) —', full: 1 },
+          { k: 'vendorId', l: 'Vendor', t: 'select', o: db.vendors.map(v => [v.id, v.nama]), ph: '— pilih vendor —', req: 1 }, { k: 'needId', l: 'Kebutuhan', t: 'select', o: db.needs.map(n => [n.id, n.nama]), ph: '— pilih kebutuhan —', req: 1 },
+          { k: 'tgl', l: 'Tanggal Pembelian', t: 'date', req: 1 }, { k: 'biaya', l: 'Biaya (Rp)', t: 'number', req: 1 }], f, v => { v.biaya = +v.biaya; if (id) Object.assign(f, v); else db.fin.push({ id: uid(), ...v }); dbSave(); render(); toast('Transaksi disimpan'); });
+        }
+        function finDel(id) { if (!canManageApar()) return toast('Akses ditolak', 'err'); confirmM('Hapus transaksi ini?', () => { db.fin = db.fin.filter(x => x.id !== id); dbSave(); closeM(); render(); toast('Transaksi dihapus'); }); }
+
+        /* ---------- export per halaman ---------- */
+        const EXPORTS = {
+          riw: () => exportX('Riwayat Inspeksi APAR', ['No', 'Nomor APAR', 'Lokasi', 'Bagian Pemilik', 'Petugas', 'Tanggal', 'Tanggal Kadaluarsa', 'Status Penggunaan', 'Status'], getRiw().map((i, n) => [n + 1, (byId(db.apars, i.aparId) || {}).kode, inspLokasi(i), inspOwner(i), i.petugas, fmtD(i.date), fmtD(inspExpiry(i)), i.pakai === 'sudah' ? 'Sudah dipakai' : 'Belum dipakai', isGood(i) ? 'Good' : 'Not Good'])),
+          exp: () => exportX('APAR Kadaluarsa', ['No', 'Kode', 'Area', 'Lokasi', 'Tanggal Kadaluarsa', 'Status'], getExp().map((a, n) => [n + 1, a.kode, areaNm(a.areaId), a.lokasi, fmtD(a.exp), 'EXP'])),
+          pakai: () => exportX('Riwayat Penggunaan APAR', ['No', 'Petugas', 'Kode APAR', 'Lokasi', 'Tanggal', 'Alasan', 'Status'], getPakai().map((p, n) => [n + 1, p.petugas, (apar(p.aparId) || {}).kode || '-', lokasi(apar(p.aparId)), fmtD(p.tgl), p.alasan, p.status])),
+          fin: () => exportX('Keuangan APAR', ['No', 'Kode APAR', 'Vendor', 'Kebutuhan', 'Tanggal Pembelian', 'Biaya'], getFin().map((f, n) => [n + 1, (apar(f.aparId) || {}).kode || '-', (byId(db.vendors, f.vendorId) || {}).nama || '-', (byId(db.needs, f.needId) || {}).nama || '-', fmtD(f.tgl), f.biaya]))
+        };
+
+        /* =====================================================================
+           ROUTER + SIDEBAR
+           ===================================================================== */
+        const MENU = [
+          { id: 'dashboard', t: 'Dashboard', i: 'fa-house' },
+          { sec: 'APAR' },
+          { g: 'master', t: 'Menu Master', i: 'fa-sitemap', ch: [['apar', 'APAR'], ['itemcheck', 'Item Check'], ['area', 'Area']] },
+          { g: 'inspection', t: 'Inspeksi & Peta', i: 'fa-clipboard-check', ch: [['inspeksi', 'Inspeksi Baru'], ['peta', 'Peta APAR']] },
+          { g: 'laporan', t: 'Laporan', i: 'fa-file-invoice', ch: [['riwayat', 'Riwayat Inspeksi'], ['perpindahan', 'Riwayat Perpindahan'], ['belum', 'Belum Inspeksi'], ['kadaluarsa', 'Kadaluarsa'], ['yearly', 'Laporan Yearly'], ['penggunaan', 'Riwayat Penggunaan']] },
+          { g: 'keu', t: 'Keuangan dan Vendor', i: 'fa-wallet', ch: [['vendor', 'Vendor'], ['kebutuhan', 'Kebutuhan'], ['keuangan', 'Keuangan']] }
+        ];
+        const PAGES = { dashboard: pDashboard, apar: pApar, itemcheck: pItem, area: pArea, inspeksi: pInspeksi, peta: pMap, riwayat: pRiwayat, perpindahan: pPerpindahan, belum: pBelum, kadaluarsa: pExp, yearly: pYearly, penggunaan: pPakai, vendor: pVendor, kebutuhan: pNeed, keuangan: pFin };
+        const PAGE_PERMISSION = {
+          dashboard: 'apar', apar: 'apar', itemcheck: 'itemcheck', area: 'area_apar', inspeksi: 'inspeksi_baru_apar',
+          peta: 'peta_apar', riwayat: 'riwayat_apar', perpindahan: 'riwayat_apar', belum: 'riwayat_apar', kadaluarsa: 'riwayat_apar',
+          yearly: 'riwayat_apar', penggunaan: 'riwayat_apar', vendor: 'vendor', kebutuhan: 'kebutuhan', keuangan: 'keuangan'
+        };
+        const open = new Set();
+        const cur = () => {
+          const h = location.hash.replace(/^#\/?/, '');
+          if (!PAGES[h]) return 'dashboard';
+          if (!canAccessModule(USER, PAGE_PERMISSION[h], AUTH_DB)) {
+            history.replaceState(null, '', location.pathname + location.search + '#dashboard');
+            toast('Akses ditolak', 'err');
+            return 'dashboard';
+          }
+          return h;
+        };
+
+        function nav() {
+          const c = cur(); MENU.forEach(m => { if (m.ch && m.ch.some(x => x[0] === c)) open.add(m.g); });
+          $('#nav').innerHTML = MENU.map(m => {
+            if (m.sec) return `<p class="px-3 pt-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">${m.sec}</p>`;
+            if (!m.ch) return `<a href="#${m.id}" class="flex items-center gap-3 px-3 py-2.5 rounded-md transition ${c === m.id ? 'bg-blue-600/30 text-white font-medium border-l-4 border-blue-500' : 'hover:bg-slate-700/50 hover:text-white'}"><i class="fa-solid ${m.i} w-4 text-center ${c === m.id ? 'text-blue-400' : 'text-slate-400'}"></i><span>${m.t}</span></a>`;
+            const children = m.ch.filter(([id]) => canAccessModule(USER, PAGE_PERMISSION[id], AUTH_DB));
+            if (!children.length) return '';
+            const o = open.has(m.g);
+            return `<div><button onclick="APR.grp('${m.g}')" class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-slate-700/50 hover:text-white transition"><div class="flex items-center gap-3"><i class="fa-solid ${m.i} w-4 text-center text-slate-400"></i><span>${m.t}</span></div><i class="fa-solid fa-chevron-right text-[10px] transition-transform duration-200 ${o ? 'rotate-90' : ''}"></i></button>
+      <div class="${o ? '' : 'hidden'} pl-9 pr-2 py-1 space-y-1 bg-slate-900/30 rounded-md my-1">${children.map(([id, t]) => `<a href="#${id}" class="block py-1.5 px-2 rounded transition ${c === id ? 'text-white bg-blue-600/30 font-medium' : 'hover:text-white hover:bg-slate-700/40'}">${t}</a>`).join('')}</div></div>`;
+          }).join('');
+        }
+        function render() {
+          charts.forEach(x => x.destroy()); charts = [];
+          nav(); PAGES[cur()](); window.scrollTo(0, 0);
+          sideClose();
+        }
+        const sideClose = () => { $('#sidebar').classList.add('-translate-x-full'); $('#overlay').classList.add('hidden'); };
+        $('#btnSide').onclick = () => { $('#sidebar').classList.toggle('-translate-x-full'); $('#overlay').classList.toggle('hidden'); };
+        $('#overlay').onclick = sideClose;
+        window.addEventListener('hashchange', () => { closeM(); render(); });
+
+        /* ---------- fungsi yang dipanggil dari atribut onclick ---------- */
+        let deb;
+        window.APR = {
+          close: closeM, grp: g => { open.has(g) ? open.delete(g) : open.add(g); nav(); },
+          pg: (id, d) => { PG[id].p += d; tbDraw(id); }, ps: (id, s) => { PG[id].s = +s; PG[id].p = 1; tbDraw(id); },
+          f: (id, k, v) => { fl(id)[k] = v; PG[id].p = 1; tbDraw(id); },
+          fs: (id, v) => { clearTimeout(deb); deb = setTimeout(() => { fl(id).q = v; PG[id].p = 1; tbDraw(id); }, 150); },
+          submit: () => {                                          // simpan form generik
+            const v = {}; let bad = '';
+            FORM.fields.forEach(f => { const e = $('#ff_' + f.k); v[f.k] = f.t === 'check' ? e.checked : (e.value || '').trim(); if (f.req && !v[f.k] && !bad) bad = `${f.l} wajib diisi.`; });
+            if (!bad) bad = FORM.onSave(v);
+            if (bad) { const e = $('#ffErr'); e.textContent = bad; e.classList.remove('hidden'); return; }
+            closeM();
+          },
+          ok: () => FORM.onOk(),
+          aparForm, aparDel, qr, qrDl, qrPrint, itemForm, itemDel, areaForm, areaDel, vendorForm, vendorDel, needForm, needDel, finForm, finDel,
+          view: viewInsp, exp: k => EXPORTS[k](),
+          insSelect, locationPreview, useLocation, saveInspection,
+          mapFilter: area => { ST.mapArea = area; pMap(); }, pgMap: pMap,
+          dashFilter: () => { const s = $('#dS').value, e = $('#dE').value; if (!s || !e) return toast('Isi bulan mulai & selesai', 'err'); if (s > e) return toast('Bulan mulai tidak boleh melewati bulan selesai', 'err'); ST.dash = { s, e }; render(); },
+          dashReset: () => { ST.dash = { s: TODAY.slice(0, 7), e: TODAY.slice(0, 7) }; render(); },
+          belumF: (k, v) => { ST.belum[k] = +v; PG.belum.p = 1; tbDraw('belum'); },
+          yearlyGo: () => { ST.yearly = { y: +$('#yY').value, kode: $('#yK').value, run: true }; if (!ST.yearly.kode.trim()) return toast('Isi kode APAR', 'err'); yearlyOut(); }
+        };
+
+        dbLoad();
+        render();
+      })();
+  </script>
+</body>
+
+</html>

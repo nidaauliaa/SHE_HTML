@@ -1,0 +1,74 @@
+html[data-theme="dark"] .apar-page {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .apar-page .bg-white,
+html[data-theme="dark"] .apar-page .bg-slate-50,
+html[data-theme="dark"] .apar-page .bg-slate-100 {
+    background-color: #1e293b !important;
+}
+
+html[data-theme="dark"] .apar-page .text-slate-800,
+html[data-theme="dark"] .apar-page .text-slate-700,
+html[data-theme="dark"] .apar-page .text-slate-600,
+html[data-theme="dark"] .apar-page .text-gray-700,
+html[data-theme="dark"] .apar-page .text-gray-600 {
+    color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .apar-page .text-slate-500,
+html[data-theme="dark"] .apar-page .text-slate-400,
+html[data-theme="dark"] .apar-page .text-gray-500 {
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .apar-page .border-slate-200,
+html[data-theme="dark"] .apar-page .border-slate-100,
+html[data-theme="dark"] .apar-page .border-gray-200,
+html[data-theme="dark"] .apar-page .border-gray-300 {
+    border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .apar-page .inp,
+html[data-theme="dark"] .apar-page input,
+html[data-theme="dark"] .apar-page select,
+html[data-theme="dark"] .apar-page textarea {
+    background-color: #0f172a !important;
+    border-color: #475569 !important;
+    color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .apar-page input::placeholder,
+html[data-theme="dark"] .apar-page textarea::placeholder {
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .apar-page table th {
+    background-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .apar-page table td {
+    border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .apar-page table tr:hover td {
+    background-color: #263449 !important;
+}
+
+.apar-page .theme-toggle {
+    border: 1px solid rgba(255, 255, 255, .28);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, .12);
+    color: #fff;
+    padding: 6px 9px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.apar-page .theme-toggle:hover {
+    background: rgba(255, 255, 255, .22);
+}

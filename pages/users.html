@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="id">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Manajemen User</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/she-logo.svg">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <script src="../js/storage.js"></script>
+    <script src="../js/theme.js"></script>
+    <style>
+        .users-page { max-width: 1440px; margin: 0 auto; }
+        .users-heading, .users-toolbar, .user-dialog-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .users-heading p, .user-hint { color: var(--mut, #6b7a90); margin: 5px 0 0; }
+        .users-toolbar { margin-bottom: 12px; }
+        .users-toolbar input { max-width: 360px; }
+        .user-dialog { width: min(720px, 94vw); max-height: 88vh; overflow: auto; }
+        .area-dialog { width: min(560px, 94vw); max-height: 88vh; overflow: auto; }
+        .user-dialog h3 { margin: 0 0 6px; }
+        .user-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; }
+        .user-roles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+        .user-role-option { display: flex; align-items: flex-start; gap: 9px; padding: 10px; border: 1px solid #dfe4ec; border-radius: 8px; cursor: pointer; }
+        .user-role-option input { margin-top: 3px; }
+        .user-role-option small { display: block; color: var(--mut, #6b7a90); margin-top: 3px; }
+        .scope-group { border: 1px solid #dfe4ec; border-radius: 8px; margin: 8px 0; padding: 10px 12px; }
+        .scope-group summary { cursor: pointer; font-weight: 600; }
+        .scope-count { float: right; color: var(--mut, #6b7a90); font-weight: 400; }
+        .scope-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding-top: 10px; }
+        .scope-options label { display: flex; align-items: flex-start; gap: 7px; }
+        .area-workspace { display: grid; grid-template-columns: 256px minmax(0, 1fr); gap: 20px; align-items: stretch; }
+        .area-sidebar, .area-main { min-width: 0; min-height: 640px; }
+        .area-sidebar h3, .area-main h3, .area-main h4 { margin: 0; }
+        .area-group-list { display: grid; gap: 5px; margin-top: 12px; }
+        .area-group-option { width: 100%; border: 0; background: transparent; color: inherit; text-align: left; padding: 10px; border-radius: 9px; cursor: pointer; }
+        .area-group-option:hover { background: rgba(99, 102, 241, .07); }
+        .area-group-option.active { background: rgba(99, 102, 241, .1); }
+        .area-group-label, .area-group-count { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; font-weight: 650; }
+        .area-group-count { color: var(--mut, #6b7a90); font-size: 11px; font-weight: 500; }
+        .area-progress { height: 4px; background: #e6ebf2; border-radius: 999px; overflow: hidden; margin-top: 7px; }
+        .area-progress span { display: block; height: 100%; background: #16a34a; border-radius: inherit; }
+        .area-group-option.incomplete .area-progress span { background: #f59e0b; }
+        .area-main { display: flex; flex-direction: column; }
+        .area-main-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+        .area-main-heading p { margin: 4px 0 0; color: var(--mut, #6b7a90); font-size: 12px; }
+        .area-main-actions { display: flex; align-items: center; gap: 8px; }
+        .area-main-actions input { width: min(240px, 42vw); }
+        .area-selection-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 9px 12px; margin: 14px 0; border-radius: 9px; background: rgba(99, 102, 241, .09); color: #4f46e5; font-size: 12px; font-weight: 650; }
+        .area-selection-actions { display: flex; gap: 8px; }
+        .area-table-wrap { overflow: auto; margin: 8px -12px 0; }
+        .area-table { width: 100%; min-width: 650px; border-collapse: collapse; }
+        .area-table th, .area-table td { padding: 11px 12px; text-align: left; border-bottom: 1px solid #edf0f5; }
+        .area-table th { color: var(--mut, #6b7a90); font-size: 11px; font-weight: 650; }
+        .area-table tr.selected td { background: rgba(99, 102, 241, .06); }
+        .area-table td:first-child, .area-table th:first-child { width: 40px; }
+        .area-table td:last-child, .area-table th:last-child { width: 44px; text-align: center; }
+        .area-table select { width: auto; min-width: 120px; margin: 0; padding: 5px 8px; }
+        .area-table input[type="checkbox"] { margin: 0; }
+        .area-status { font-size: 12px; white-space: nowrap; }
+        .area-status.assigned { color: #15803d; }
+        .area-status.unassigned { color: #b45309; }
+        .area-row-action { border: 0; background: transparent; color: var(--mut, #6b7a90); border-radius: 6px; cursor: pointer; font-size: 18px; line-height: 1; padding: 5px 8px; }
+        .area-row-action:hover { background: rgba(100, 116, 139, .12); }
+        .area-table-empty { text-align: center !important; color: var(--mut, #6b7a90); padding: 24px !important; }
+        .area-table-footer { margin-top: auto; padding-top: 12px; color: var(--mut, #6b7a90); font-size: 11px; }
+        .user-dialog-actions { position: sticky; bottom: -22px; background: var(--card, #fff); padding: 12px 0 2px; margin-top: 16px; }
+        .user-access { color: var(--mut, #6b7a90); white-space: nowrap; }
+        @media (max-width: 820px) {
+            .area-workspace { grid-template-columns: 1fr; }
+            .area-sidebar, .area-main { min-height: 0; }
+            .area-group-list { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+        }
+        @media (max-width: 640px) {
+            .users-heading, .users-toolbar { align-items: stretch; flex-direction: column; }
+            .users-toolbar input { max-width: none; }
+            .user-fields, .user-roles, .scope-options { grid-template-columns: 1fr; }
+            .user-dialog-actions { bottom: -22px; }
+            .area-main-actions { width: 100%; }
+            .area-main-actions input { flex: 1; width: auto; }
+            .area-selection-actions { width: 100%; }
+            .area-selection-actions button { flex: 1; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap users-page">
+        <div id="v"></div>
+    </div>
+    <dialog id="dg"></dialog>
+    <script src="../js/data.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/permissions.js"></script>
+    <script src="../js/store.js"></script>
+    <script>
+        if (!guard() || !guardAdmin()) throw new Error('Akses ditolak');
+        topbar('👥 Manajemen User', true);
+        const db = load(), v = document.getElementById('v'), dg = document.getElementById('dg');
+        const moduleList = () => [{ id: 'apar', name: 'APAR / FireCheck' }, { id: 'patrol5r', name: 'Patrol 5R & K3' }, ...db.forms.map(form => ({ id: form.id, name: form.name }))];
+        const accountRoles = user => normalizeRoles(user);
+        const isAdminAccount = user => accountRoles(user).includes('admin');
+        const adminCount = () => db.users.filter(isAdminAccount).length;
+        const aparAreas = () => (SHEStorage.getJSON('she_apar_v1') || {}).areas || [];
+        let editor = null, activeTab = new URLSearchParams(location.search).get('tab') === 'areas' ? 'areas' : 'users',
+            activeAreaDepartment = '', areaSearchQuery = '', selectedAreaIds = new Set();
+        const emptyScope = () => ({ aparAreaIds: [], patrolAreaIds: [], picAreaIds: [] });
+        const legacyModuleIds = user => CUSTOM_MODULE_ROLES.some(role => accountRoles(user).includes(role)) ? db.forms.map(form => form.id) : [];
+        const roleChecks = (selected, prefix) => ROLE_DEFINITIONS.map(role => `<label class="user-role-option"><input type="checkbox" class="${prefix}_role" value="${role.id}" ${selected.includes(role.id) ? 'checked' : ''} onchange="rolesChanged()"><span><b>${esc(role.label)}</b><small>${esc(role.description)}</small></span></label>`).join('');
+        const checkedValues = selector => [...document.querySelectorAll(selector + ':checked')].map(input => input.value);
+        const selectedRoles = prefix => checkedValues(`.${prefix}_role`);
+
+        function render() {
+            v.innerHTML = `<section class="card users-heading"><div><h2 style="margin:0">Manajemen User</h2><p>Kelola akun, area, PIC, dan akses modul.</p></div></section>
+              <section class="card"><div class="seg"><button id="usersTab" onclick="setTab('users')">Pengguna</button><button id="areasTab" onclick="setTab('areas')">Area & PIC</button></div></section>
+              <div id="tabContent"></div>
+              <details class="card"><summary style="cursor:pointer;font-weight:700">Panduan peran</summary><div style="padding-top:8px">${ROLE_DEFINITIONS.map(role => `<p><b>${esc(role.label)}:</b> ${esc(role.description)}</p>`).join('')}</div></details>`;
+            setTab(activeTab);
+        }
+
+        function setTab(tab) {
+            activeTab = tab;
+            document.getElementById('usersTab').classList.toggle('on', tab === 'users');
+            document.getElementById('areasTab').classList.toggle('on', tab === 'areas');
+            if (tab === 'users') renderUsers();
+            else renderAreas();
+        }
+
+        function renderUsers() {
+            document.getElementById('tabContent').innerHTML = `<section class="card">
+                <div class="users-toolbar"><div><h3 style="margin:0">Daftar pengguna <span id="userCount" class="user-hint"></span></h3></div><button class="btn" onclick="openEditor()">+ Tambah pengguna</button></div>
+                <input id="userSearch" type="search" placeholder="Cari nama, username, atau peran" oninput="filterUsers()" style="margin-bottom:12px">
+                <div class="tw"><table><thead><tr><th>Pengguna</th><th>Peran</th><th>Bagian</th><th>Akses</th><th></th></tr></thead><tbody id="userRows"></tbody></table></div>
+                <p id="emptyUsers" class="user-hint" style="display:none;text-align:center;padding:18px">Tidak ada pengguna yang cocok.</p>
+              </section>`;
+            filterUsers();
+        }
+
+        function filterUsers() {
+            const query = (document.getElementById('userSearch')?.value || '').trim().toLowerCase();
+            const visible = db.users.filter(user => [user.username || user.nik, user.nama, user.divisi, ...accountRoles(user).map(role => ROLE_LABELS[role] || role)].join(' ').toLowerCase().includes(query));
+            document.getElementById('userRows').innerHTML = visible.map(user => {
+                const roles = accountRoles(user), modules = moduleList().filter(module => canAccessModule(user, module.id, db));
+                const accessNames = modules.map(module => module.name).join(', ') || 'Tidak ada akses';
+                return `<tr><td><b>${esc(user.nama)}</b>${user.nik === me().nik ? ' <span class="chip">Anda</span>' : ''}<br><small>${esc(user.username || user.nik)}</small></td>
+                  <td>${roles.map(role => `<span class="chip ${role === 'admin' ? 'c5' : ''}">${esc(ROLE_LABELS[role])}</span>`).join(' ') || '-'}</td>
+                  <td>${esc(user.divisi || '-')}</td><td><span class="user-access" title="${esc(accessNames)}">${modules.length} modul</span></td>
+                  <td style="white-space:nowrap"><button class="btn g s" onclick="ed('${esc(user.nik)}')">Atur</button> <button class="btn r s" aria-label="Hapus ${esc(user.nama)}" onclick="del('${esc(user.nik)}')">Hapus</button></td></tr>`;
+            }).join('');
+            document.getElementById('userCount').textContent = `(${visible.length}/${db.users.length})`;
+            document.getElementById('emptyUsers').style.display = visible.length ? 'none' : 'block';
+        }
+
+        function openEditor(nik) {
+            const user = nik ? db.users.find(item => item.nik === nik) : null;
+            if (nik && !user) return;
+            const roles = user ? accountRoles(user) : ['petugas_she'];
+            const moduleIds = user ? (Array.isArray(user.moduleIds) ? [...user.moduleIds] : legacyModuleIds(user)) : [];
+            editor = { user, creating: !user, scope: JSON.parse(JSON.stringify(user && user.scope || emptyScope())), moduleIds };
+            dg.className = 'user-dialog';
+            dg.innerHTML = `<h3>${user ? 'Atur pengguna' : 'Tambah pengguna'}</h3><p class="user-hint">Isi identitas, pilih peran, lalu atur scope area dan modul yang boleh diakses.</p>
+              <div class="user-fields">
+                <div><label>Username</label><input id="eUsername" value="${esc(user ? user.username || user.nik : '')}" autocomplete="username" placeholder="mis. operator.she"></div>
+                <div><label>Nama</label><input id="eNama" value="${esc(user ? user.nama : '')}" autocomplete="name"></div>
+                <div><label>Bagian <small>(opsional)</small></label><input id="eDivisi" value="${esc(user && user.divisi || '')}" placeholder="Mis. PPC"></div>
+                <div><label>${user ? 'Password baru (opsional)' : 'Password'}</label><input id="ePass" type="password" autocomplete="new-password" ${user ? '' : 'placeholder="Minimal 4 karakter"' }></div>
+              </div>
+              <h4 style="margin:16px 0 8px">Peran <small>(bisa memilih lebih dari satu)</small></h4>
+              <div class="user-roles">${roleChecks(roles, 'edit')}</div>
+              <div id="scopeFields"></div>
+              <div class="user-dialog-actions"><button class="btn g" onclick="dg.close()">Batal</button><button class="btn" onclick="saveEditor()">Simpan</button></div>`;
+            renderScopes(roles);
+            dg.showModal();
+        }
+
+        function ed(nik) { openEditor(nik); }
+
+        function renderScopes(roles) {
+            const host = document.getElementById('scopeFields');
+            const needsAparScope = roles.includes('petugas_she');
+            const needsPatrolScope = roles.includes('supervisor');
+            const canSelectModules = CUSTOM_MODULE_ROLES.some(role => roles.includes(role));
+            const apar = aparAreas();
+            const aparGroup = needsAparScope ? `<details class="scope-group"><summary>Area APAR <span class="scope-count" id="aparScopeCount"></span></summary>
+              <div class="scope-options">${apar.map(area => `<label><input type="checkbox" class="scope_apar" value="${esc(area.id)}" ${(editor.scope.aparAreaIds || []).includes(area.id) ? 'checked' : ''} onchange="updateScopeDraft()"><span>${esc(area.nama)}</span></label>`).join('') || '<span>Belum ada data area APAR.</span>'}</div></details>` : '';
+            const catalog = getAreas(db);
+            const patrolGroup = needsPatrolScope ? [...new Set(catalog.map(area => area.d))].map((dept, index) => {
+                const areas = catalog.filter(area => area.d === dept);
+                return `<details class="scope-group"><summary>${esc(dept)} <span class="scope-count" id="patrolScopeCount${index}">${areas.filter(area => (editor.scope.patrolAreaIds || []).includes(area.id)).length}/${areas.length}</span></summary><div class="scope-options">${areas.map(area => `<label><input type="checkbox" class="scope_patrol" value="${esc(area.id)}" ${(editor.scope.patrolAreaIds || []).includes(area.id) ? 'checked' : ''} onchange="updateScopeDraft()"><span>${esc(area.b)}</span></label>`).join('')}</div></details>`;
+            }).join('') : '';
+            const moduleGroup = roles.includes('admin')
+                ? '<p class="user-hint">Admin SHE otomatis memiliki akses ke semua modul.</p>'
+                : canSelectModules
+                    ? `<p class="user-hint">Pilih modul inspeksi tambahan yang dapat dibuka pengguna. Petugas SHE dapat menginput inspeksi; Supervisor hanya dapat melihat data sesuai scope area.</p>
+                      <details class="scope-group" open><summary>Akses Modul Inspeksi Tambahan <span class="scope-count" id="moduleScopeCount">${(editor.moduleIds || []).length}/${db.forms.length}</span></summary>
+                        <div class="scope-options">${db.forms.map(form => `<label><input type="checkbox" class="scope_module" value="${esc(form.id)}" ${(editor.moduleIds || []).includes(form.id) ? 'checked' : ''} onchange="updateModuleAccessDraft()"><span>${esc(form.name)}</span></label>`).join('') || '<span>Belum ada modul tambahan. Modul dibuat dari menu Modul Baru.</span>'}</div>
+                      </details>`
+                    : '<p class="user-hint">Akses modul inspeksi tambahan hanya dapat diatur untuk peran Petugas SHE atau Supervisor.</p>';
+            host.innerHTML = `${needsAparScope ? `<p class="user-hint">Pilih area APAR yang boleh dilihat pengguna dengan peran Petugas SHE.</p>${aparGroup}` : ''}${needsPatrolScope ? `<p class="user-hint">Scope supervisor berlaku untuk data Patrol 5R dan membatasi data pada modul inspeksi tambahan.</p>${patrolGroup}` : ''}${roles.includes('pic_area') ? '<p class="user-hint">PIC hanya melihat riwayat Patrol 5R dan temuan pada area yang ditugaskan di tab Area & PIC.</p>' : ''}${moduleGroup}`;
+            updateScopeCounts();
+        }
+
+        function updateScopeDraft() {
+            if (document.querySelector('.scope_apar')) editor.scope.aparAreaIds = checkedValues('.scope_apar');
+            if (document.querySelector('.scope_patrol')) editor.scope.patrolAreaIds = checkedValues('.scope_patrol');
+            updateScopeCounts();
+        }
+
+        function updateScopeCounts() {
+            const aparCount = document.getElementById('aparScopeCount');
+            if (aparCount) aparCount.textContent = `${checkedValues('.scope_apar').length} dipilih`;
+            const areas = getAreas(db), depts = [...new Set(areas.map(area => area.d))];
+            depts.forEach((dept, index) => {
+                const count = document.getElementById('patrolScopeCount' + index);
+                if (count) {
+                    const selected = areas.filter(area => area.d === dept && checkedValues('.scope_patrol').includes(area.id)).length;
+                    count.textContent = `${selected}/${areas.filter(area => area.d === dept).length}`;
+                }
+            });
+        }
+
+        function rolesChanged() {
+            updateScopeDraft();
+            updateModuleAccessDraft();
+            renderScopes(selectedRoles('edit'));
+        }
+
+        function updateModuleAccessDraft() {
+            if (document.querySelector('.scope_module')) editor.moduleIds = checkedValues('.scope_module');
+            const count = document.getElementById('moduleScopeCount');
+            if (count) count.textContent = `${(editor.moduleIds || []).length}/${db.forms.length}`;
+        }
+
+        function saveEditor() {
+            const creating = editor.creating, user = editor.user;
+            const username = document.getElementById('eUsername').value.trim();
+            const nama = document.getElementById('eNama').value.trim();
+            const divisi = document.getElementById('eDivisi').value.trim();
+            const pass = document.getElementById('ePass').value;
+            const roles = selectedRoles('edit');
+            if (!username || !nama) return alert('Username dan nama wajib diisi.');
+            if (!/^[A-Za-z0-9._-]{3,30}$/.test(username)) return alert('Username harus 3–30 karakter dan hanya boleh berisi huruf, angka, titik, garis bawah, atau tanda hubung.');
+            if (db.users.some(item => String(item.username || item.nik).toLowerCase() === username.toLowerCase() && (!user || item.nik !== user.nik))) return alert('Username sudah terdaftar.');
+            if (pass.length && pass.length < 4) return alert('Password minimal 4 karakter.');
+            if (creating && !pass.length) return alert('Password wajib diisi.');
+            if (!roles.length) return alert('Pilih minimal satu peran.');
+            if (!creating && isAdminAccount(user) && !roles.includes('admin') && (adminCount() <= 1 || user.nik === me().nik)) return alert(user.nik === me().nik ? 'Tidak bisa menghapus peran admin akun sendiri.' : 'Harus ada minimal satu Admin SHE.');
+            const oldNik = user && user.nik;
+            const assignedAreaIds = oldNik ? Object.keys(db.areaPics || {}).filter(areaId => db.areaPics[areaId] === oldNik) : [];
+            if (assignedAreaIds.length && !roles.includes('pic_area')) return alert('Pengguna masih menjadi PIC area. Pindahkan penugasan di tab Area & PIC terlebih dahulu.');
+            const canHaveCustomModules = CUSTOM_MODULE_ROLES.some(role => roles.includes(role)) && !roles.includes('admin');
+            const selectedModuleIds = document.querySelector('.scope_module')
+                ? checkedValues('.scope_module')
+                : editor.moduleIds || [];
+            const validModuleIds = new Set(db.forms.map(form => form.id));
+            const moduleIds = canHaveCustomModules ? [...new Set(selectedModuleIds.filter(id => validModuleIds.has(id)))] : [];
+            const oldPics = { ...(db.areaPics || {}) };
+            const target = creating ? { nik: username, username, nama, divisi, roles, role: roles[0], scope: JSON.parse(JSON.stringify(editor.scope)) } : user;
+            const previous = creating ? null : JSON.parse(JSON.stringify(target));
+            target.nik = username;
+            target.username = username;
+            target.nama = nama;
+            target.divisi = divisi;
+            target.roles = roles;
+            target.role = roles[0];
+            target.scope = { ...(target.scope || emptyScope()) };
+            target.moduleIds = moduleIds;
+            target.scope.aparAreaIds = roles.includes('petugas_she') ? (document.querySelector('.scope_apar') ? checkedValues('.scope_apar') : editor.scope.aparAreaIds || []) : [];
+            target.scope.patrolAreaIds = roles.includes('supervisor') ? (document.querySelector('.scope_patrol') ? checkedValues('.scope_patrol') : editor.scope.patrolAreaIds || []) : [];
+            target.scope.picAreaIds = target.scope.picAreaIds || [];
+            if (oldNik && oldNik !== username) Object.keys(db.areaPics || {}).forEach(areaId => { if (db.areaPics[areaId] === oldNik) db.areaPics[areaId] = username; });
+            if (pass) target.passwordHash = hashPassword(pass);
+            delete target.pass;
+            if (creating) db.users.push(target);
+            syncPicScopes();
+            if (!save(db)) {
+                if (creating) db.users.pop();
+                else Object.assign(user, previous);
+                db.areaPics = oldPics;
+                syncPicScopes();
+                return;
+            }
+            if (!creating && oldNik === me().nik) { setSession(target); location.reload(); return }
+            dg.close();
+            editor = null;
+            render();
+        }
+
+        function syncPicScopes() {
+            db.users.forEach(user => {
+                user.scope = { ...emptyScope(), ...(user.scope || {}) };
+                user.scope.picAreaIds = accountRoles(user).includes('pic_area')
+                    ? Object.keys(db.areaPics || {}).filter(areaId => db.areaPics[areaId] === user.nik)
+                    : [];
+            });
+        }
+
+        function del(nik) {
+            const user = db.users.find(item => item.nik === nik);
+            if (!user) return;
+            if (nik === me().nik) return alert('Akun yang sedang dipakai tidak bisa dihapus.');
+            if (isAdminAccount(user) && adminCount() <= 1) return alert('Harus ada minimal satu Admin SHE.');
+            if (Object.values(db.areaPics || {}).includes(nik)) return alert('Pengguna masih menjadi PIC area. Pindahkan penugasan di tab Area & PIC terlebih dahulu.');
+            if (!confirm(`Hapus akun ${user.nama} (${user.username || user.nik})?`)) return;
+            const previousUsers = db.users;
+            db.users = db.users.filter(item => item.nik !== nik);
+            if (!save(db)) { db.users = previousUsers; return }
+            renderUsers();
+        }
+
+        function areaGroups() {
+            const grouped = new Map();
+            getAreas(db).forEach(area => {
+                if (!grouped.has(area.d)) grouped.set(area.d, []);
+                grouped.get(area.d).push(area);
+            });
+            return [...grouped.entries()].map(([department, areas]) => ({
+                department,
+                areas: areas.sort((a, b) => a.b.localeCompare(b.b, 'id'))
+            })).sort((a, b) => a.department.localeCompare(b.department, 'id'));
+        }
+
+        function currentAreaGroup() {
+            return areaGroups().find(group => group.department === activeAreaDepartment) || null;
+        }
+
+        function visibleAreasInGroup() {
+            const group = currentAreaGroup();
+            const query = areaSearchQuery.trim().toLowerCase();
+            return group ? group.areas.filter(area => !query || area.b.toLowerCase().includes(query)) : [];
+        }
+
+        function selectAreaGroup(department) {
+            activeAreaDepartment = department;
+            selectedAreaIds.clear();
+            renderAreas();
+        }
+
+        function searchAreas(value) {
+            areaSearchQuery = value;
+            renderAreas();
+            const search = document.getElementById('areaSearch');
+            if (search) { search.focus(); search.setSelectionRange(value.length, value.length); }
+        }
+
+        function toggleAreaSelection(id, checked) {
+            if (checked) selectedAreaIds.add(id);
+            else selectedAreaIds.delete(id);
+            renderAreas();
+        }
+
+        function toggleVisibleAreaSelection(checked) {
+            visibleAreasInGroup().forEach(area => {
+                if (checked) selectedAreaIds.add(area.id);
+                else selectedAreaIds.delete(area.id);
+            });
+            renderAreas();
+        }
+
+        function renderAreas() {
+            const areas = getAreas(db), groups = areaGroups(), pics = db.areaPics || {};
+            const picUsers = db.users.filter(user => accountRoles(user).includes('pic_area'));
+            if (!groups.some(group => group.department === activeAreaDepartment)) {
+                activeAreaDepartment = groups.length ? groups[0].department : '';
+                selectedAreaIds.clear();
+            }
+            const group = currentAreaGroup(), visible = visibleAreasInGroup();
+            selectedAreaIds = new Set([...selectedAreaIds].filter(id => group && group.areas.some(area => area.id === id)));
+            const groupAssigned = group ? group.areas.filter(area => picUsers.some(user => user.nik === pics[area.id])).length : 0;
+            const allVisibleSelected = visible.length > 0 && visible.every(area => selectedAreaIds.has(area.id));
+            const bulkActions = selectedAreaIds.size ? `<div class="area-selection-bar">
+                <span>${selectedAreaIds.size} area dipilih</span>
+                <div class="area-selection-actions"><button class="btn s" onclick="openBulkPicEditor()" ${picUsers.length ? '' : 'disabled'}>Tetapkan PIC</button><button class="btn g s" onclick="deleteSelectedAreas()">Hapus</button></div>
+              </div>` : '';
+            const groupList = groups.map(item => {
+                const assigned = item.areas.filter(area => picUsers.some(user => user.nik === pics[area.id])).length;
+                const complete = item.areas.length ? assigned / item.areas.length * 100 : 0;
+                const selected = item.department === activeAreaDepartment;
+                return `<button class="area-group-option ${selected ? 'active' : ''} ${assigned < item.areas.length ? 'incomplete' : ''}" onclick="selectAreaGroup(this.dataset.department)" data-department="${esc(item.department)}" ${selected ? 'aria-current="true"' : ''}>
+                    <span class="area-group-label"><span>${esc(item.department || 'Tanpa bagian')}</span><span class="area-group-count">${assigned}/${item.areas.length}</span></span>
+                    <span class="area-progress"><span style="width:${complete}%"></span></span>
+                  </button>`;
+            }).join('');
+            const rows = visible.map(area => {
+                const picId = pics[area.id] || '', assigned = picUsers.some(user => user.nik === picId);
+                return `<tr class="${selectedAreaIds.has(area.id) ? 'selected' : ''}">
+                    <td><input type="checkbox" aria-label="Pilih ${esc(area.b)}" data-area-id="${esc(area.id)}" ${selectedAreaIds.has(area.id) ? 'checked' : ''} onchange="toggleAreaSelection(this.dataset.areaId,this.checked)"></td>
+                    <td>${esc(area.b)}</td>
+                    <td><select aria-label="PIC ${esc(area.b)}" data-area-id="${esc(area.id)}" onchange="assignAreaPic(this.dataset.areaId,this.value)" ${picUsers.length ? '' : 'disabled'}>
+                      <option value="">Pilih PIC</option>${picUsers.map(user => `<option value="${esc(user.nik)}" ${user.nik === picId ? 'selected' : ''}>${esc(user.nama)}</option>`).join('')}
+                    </select></td>
+                    <td><span class="area-status ${assigned ? 'assigned' : 'unassigned'}">● ${assigned ? 'PIC ditetapkan' : 'Perlu PIC'}</span></td>
+                    <td><button class="area-row-action" type="button" aria-label="Opsi ${esc(area.b)}" title="Opsi area" data-area-id="${esc(area.id)}" onclick="openAreaActions(this.dataset.areaId)">⋮</button></td>
+                  </tr>`;
+            }).join('');
+            document.getElementById('tabContent').innerHTML = `<div class="area-workspace">
+                <aside class="card area-sidebar">
+                  <div class="area-group-label"><h3>Grup area</h3><span class="area-group-count">${areas.length} area</span></div>
+                  ${groups.length ? `<div class="area-group-list">${groupList}</div>` : '<p class="user-hint">Belum ada grup area.</p>'}
+                </aside>
+                <section class="card area-main">
+                  <div class="area-main-heading">
+                    <div><h3>${esc(group ? group.department || 'Tanpa bagian' : 'Daftar area')}</h3>
+                    <p>${group ? `${group.areas.length} area · ${group.areas.length - groupAssigned} area perlu PIC. Pilih PIC lalu tetapkan jika diperlukan.` : 'Kelola area dan penanggung jawabnya.'}</p></div>
+                    <div class="area-main-actions"><input id="areaSearch" type="search" value="${esc(areaSearchQuery)}" placeholder="Cari area..." oninput="searchAreas(this.value)"><button class="btn" onclick="openAreaEditor()">+ Tambah area</button></div>
+                  </div>
+                  ${bulkActions}
+                  ${picUsers.length ? '' : '<p class="user-hint">Tambahkan pengguna dengan peran PIC Area terlebih dahulu agar dapat menetapkan PIC.</p>'}
+                  <div class="area-table-wrap"><table class="area-table"><thead><tr>
+                    <th><input type="checkbox" aria-label="Pilih semua area yang tampil" ${allVisibleSelected ? 'checked' : ''} onchange="toggleVisibleAreaSelection(this.checked)"></th>
+                    <th>Nama area</th><th>PIC</th><th>Status</th><th></th>
+                  </tr></thead><tbody>${rows || `<tr><td class="area-table-empty" colspan="5">${group ? (areaSearchQuery ? 'Tidak ada area yang cocok.' : 'Grup ini belum memiliki area.') : 'Belum ada area.'}</td></tr>`}</tbody></table></div>
+                  <div class="area-table-footer">Menampilkan ${visible.length} dari ${group ? group.areas.length : 0} area</div>
+                </section>
+              </div>`;
+        }
+
+        function savePicAssignments(assignments) {
+            const validPicIds = new Set(db.users.filter(user => accountRoles(user).includes('pic_area')).map(user => user.nik));
+            const validAreaIds = new Set(getAreas(db).map(area => area.id));
+            if (assignments.some(([areaId]) => !validAreaIds.has(areaId))) return alert('Area tidak ditemukan.');
+            if (assignments.some(([, picId]) => picId && !validPicIds.has(picId))) return alert('Pilih pengguna dengan peran PIC Area.');
+            const previousPics = { ...(db.areaPics || {}) };
+            const previousScopes = db.users.map(user => ({ user, scope: user.scope ? JSON.parse(JSON.stringify(user.scope)) : null }));
+            db.areaPics = { ...(db.areaPics || {}) };
+            assignments.forEach(([areaId, picId]) => {
+                if (picId) db.areaPics[areaId] = picId;
+                else delete db.areaPics[areaId];
+            });
+            syncPicScopes();
+            if (!save(db)) {
+                db.areaPics = previousPics;
+                previousScopes.forEach(item => { if (item.scope) item.user.scope = item.scope; else delete item.user.scope });
+                return false;
+            }
+            return true;
+        }
+
+        function assignAreaPic(areaId, picId) {
+            if (!getAreas(db).some(area => area.id === areaId)) return alert('Area tidak ditemukan.');
+            if (!savePicAssignments([[areaId, picId]])) return renderAreas();
+            renderAreas();
+        }
+
+        function openBulkPicEditor() {
+            if (!selectedAreaIds.size) return alert('Pilih minimal satu area terlebih dahulu.');
+            const picUsers = db.users.filter(user => accountRoles(user).includes('pic_area'));
+            if (!picUsers.length) return alert('Tambahkan pengguna dengan peran PIC Area terlebih dahulu.');
+            dg.className = 'area-dialog';
+            dg.innerHTML = `<h3>Tetapkan PIC</h3><p class="user-hint">${selectedAreaIds.size} area terpilih akan ditetapkan ke PIC yang sama.</p>
+              <div><label>PIC Area</label><select id="bulkAreaPic"><option value="">Pilih PIC</option>${picUsers.map(user => `<option value="${esc(user.nik)}">${esc(user.nama)} (${esc(user.username || user.nik)})</option>`).join('')}</select></div>
+              <div class="user-dialog-actions"><button class="btn g" onclick="dg.close()">Batal</button><button class="btn" onclick="applyBulkPic()">Tetapkan PIC</button></div>`;
+            dg.showModal();
+        }
+
+        function applyBulkPic() {
+            const picId = document.getElementById('bulkAreaPic').value;
+            if (!picId) return alert('Pilih PIC terlebih dahulu.');
+            const assignments = [...selectedAreaIds].map(areaId => [areaId, picId]);
+            if (!savePicAssignments(assignments)) return;
+            selectedAreaIds.clear();
+            dg.close();
+            renderAreas();
+        }
+
+        function deleteSelectedAreas() {
+            deleteAreaSelection([...selectedAreaIds]);
+        }
+
+        function openAreaActions(id) {
+            const area = getAreas(db).find(item => item.id === id);
+            if (!area) return alert('Area tidak ditemukan.');
+            dg.className = 'area-dialog';
+            dg.innerHTML = `<h3>Opsi area: ${esc(area.b)}</h3>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">
+                <button class="btn g" onclick="dg.close();openAreaEditor(this.dataset.areaId)" data-area-id="${esc(id)}">Atur area</button>
+                <button class="btn r" onclick="dg.close();delArea(this.dataset.areaId)" data-area-id="${esc(id)}">Hapus area</button>
+                <button class="btn g" onclick="dg.close()">Tutup</button>
+              </div>`;
+            dg.showModal();
+        }
+
+        function deleteAreaSelection(ids) {
+            const selected = getAreas(db).filter(area => ids.includes(area.id));
+            if (!selected.length) return;
+            const used = selected.filter(area => [...(db.p5 || []), ...(db.inspections || [])].some(record => record.bag === area.id));
+            if (used.length) return alert(`Area berikut sudah dipakai pada riwayat inspeksi atau patroli dan tidak dapat dihapus: ${used.map(area => area.b).join(', ')}.`);
+            const names = selected.map(area => area.b).join(', ');
+            if (!confirm(`Hapus ${selected.length === 1 ? `area "${names}"` : `${selected.length} area (${names})`}?`)) return;
+            const selectedIds = new Set(selected.map(area => area.id));
+            const previousCatalog = getAreas(db).map(item => ({ ...item }));
+            const previousPics = { ...(db.areaPics || {}) };
+            const hadCatalog = Array.isArray(db.areaMaster);
+            const previousScopes = db.users.map(user => ({ user, scope: user.scope ? JSON.parse(JSON.stringify(user.scope)) : null }));
+            db.areaMaster = previousCatalog.filter(item => !selectedIds.has(item.id));
+            db.areaPics = { ...(db.areaPics || {}) };
+            selectedIds.forEach(id => delete db.areaPics[id]);
+            db.users.forEach(user => {
+                if (user.scope) user.scope.patrolAreaIds = (user.scope.patrolAreaIds || []).filter(areaId => !selectedIds.has(areaId));
+            });
+            syncPicScopes();
+            if (!save(db)) {
+                db.areaMaster = hadCatalog ? previousCatalog : undefined;
+                db.areaPics = previousPics;
+                previousScopes.forEach(item => { if (item.scope) item.user.scope = item.scope; else delete item.user.scope });
+                return;
+            }
+            selectedIds.forEach(id => selectedAreaIds.delete(id));
+            renderAreas();
+        }
+
+        function openAreaEditor(id) {
+            const area = id ? getAreas(db).find(item => item.id === id) : null;
+            if (id && !area) return alert('Area tidak ditemukan.');
+            const picUsers = db.users.filter(user => accountRoles(user).includes('pic_area'));
+            dg.className = 'area-dialog';
+            dg.innerHTML = `<h3>${area ? 'Atur area' : 'Tambah area'}</h3>
+              <div><label>Bagian</label><input id="areaDept" value="${esc(area ? area.d : '')}" placeholder="mis. PPC"></div>
+              <div><label>Nama area</label><input id="areaName" value="${esc(area ? area.b : '')}" placeholder="mis. Ruang Produksi"></div>
+              <div><label>PIC area</label><select id="areaPic"><option value="">Pilih PIC</option>${picUsers.map(user => `<option value="${esc(user.nik)}" ${(db.areaPics || {})[id] === user.nik ? 'selected' : ''}>${esc(user.nama)} (${esc(user.username || user.nik)})</option>`).join('')}</select></div>
+              ${picUsers.length ? '' : '<p class="user-hint">Belum ada pengguna dengan peran PIC Area. Buat atau ubah peran pengguna terlebih dahulu.</p>'}
+              <div class="user-dialog-actions"><button class="btn g" onclick="dg.close()">Batal</button><button class="btn" onclick="saveArea('${esc(id || '')}')">Simpan</button></div>`;
+            dg.showModal();
+        }
+
+        function saveArea(id) {
+            const department = document.getElementById('areaDept').value.trim();
+            const name = document.getElementById('areaName').value.trim();
+            const picId = document.getElementById('areaPic').value;
+            const pic = db.users.find(user => user.nik === picId && accountRoles(user).includes('pic_area'));
+            if (!department || !name) return alert('Bagian dan nama area wajib diisi.');
+            if (!pic) return alert('Setiap area wajib memiliki PIC dengan peran PIC Area.');
+            const catalog = getAreas(db);
+            if (catalog.some(area => area.id !== id && area.d.toLowerCase() === department.toLowerCase() && area.b.toLowerCase() === name.toLowerCase())) return alert('Nama area sudah digunakan pada bagian tersebut.');
+            const existing = id ? catalog.find(area => area.id === id) : null;
+            if (id && !existing) return alert('Area tidak ditemukan.');
+            const previousCatalog = catalog.map(area => ({ ...area }));
+            const hadCatalog = Array.isArray(db.areaMaster);
+            const previousPics = { ...(db.areaPics || {}) };
+            const previousScopes = db.users.map(user => ({ user, scope: user.scope ? JSON.parse(JSON.stringify(user.scope)) : null }));
+            const areaId = id || uid();
+            const updated = { ...(existing || {}), id: areaId, d: department, b: name, n: `${department} - ${name}`, f: existing && existing.f || 'umum' };
+            db.areaMaster = existing ? catalog.map(area => area.id === areaId ? updated : area) : [...catalog, updated];
+            db.areaPics = { ...(db.areaPics || {}), [areaId]: picId };
+            syncPicScopes();
+            if (!save(db)) {
+                db.areaMaster = hadCatalog ? previousCatalog : undefined;
+                db.areaPics = previousPics;
+                previousScopes.forEach(item => { if (item.scope) item.user.scope = item.scope; else delete item.user.scope });
+                return;
+            }
+            dg.close();
+            activeAreaDepartment = department;
+            areaSearchQuery = '';
+            selectedAreaIds.clear();
+            renderAreas();
+        }
+
+        function delArea(id) {
+            deleteAreaSelection([id]);
+        }
+
+        render();
+    </script>
+</body>
+
+</html>
